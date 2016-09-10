@@ -1,26 +1,44 @@
 #include "fifo_data.h"
 
+/** Como client.c pero cada 5 segundos le manda un mensaje al servidor
+    a través del fifo que crea en el primer request.
+*/
+
 void send_request(char * fifo, t_request req);
 t_response read_response(char * fifo);
+void talk_to(char * fifo);
 
 int main()
 {
-  int server_fd, client_fd, cid_fd, cid;
-
+  int server_fd, client_fd , cid_fd, cid;
+  char * client_fifo;
   // El fifo del cliente lo tiene que dar el servidor para asegurarse que cada
   // cliente tenga un nombre distinto.
-
   t_request req = { .msg_len = sizeof(ID_SIGNAL), .msg = ID_SIGNAL, \
     .fifo_len = sizeof(CID_FIFO), .res_fifo = CID_FIFO};
 
   send_request(SERVER_FIFO_PATH, req);
-  printf("Request sent by client\n");
-
   t_response res = read_response(CID_FIFO);
 
-  printf("Response read by client\n");
-  printf("msg: %d\n", res.msg_len);
-  printf("str: %s\n", res.msg);
+  client_fifo = res.msg;
+  talk_to(client_fifo);
+}
+
+void talk_to(char * fifo) {
+  printf("talking listening with: %s\n", fifo);
+  t_response a;
+  int count = 0;
+  while(1) {
+    char * m = malloc(6);
+    sprintf(m, "FP%03d", count);
+    t_request r = { .msg_len = 6, .msg = m, .fifo_len = CLIENT_FIFO_LEN, .res_fifo = fifo };
+    send_request(SERVER_FIFO_PATH, r);
+    a = read_response(fifo);
+    printf("Response from server -> persistent: %s / %d\n", a.msg, a.msg_len);
+
+    sleep(5);
+    count++;
+  }
 }
 
 void send_request(char * fifo, t_request req) {
