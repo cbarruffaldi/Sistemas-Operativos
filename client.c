@@ -22,10 +22,7 @@ int main()
 
   printf("fifo: %s\n", fifo_client);
 
-  int client_fd = mkfifo(fifo_client, 0666);
-
-  printf("client_fd: %d\n", client_fd);
-  // printf("cid: %d\n", cid);
+  // abrir fifo con el path que le dio el server
 
   close(fifo_id);
   close(fifo_server);
