@@ -1,43 +1,72 @@
 #include "fifo_data.h"
 
-void send_request(char * fifo, t_request req);
+#define LEAVE "leave"  // Si se envia LEAVE se cierra el cliente
+
+t_requestADT create_request();
+void set_request_msg(t_requestADT req, char *msg);
+t_response send_request(int fd, t_requestADT req);
 t_response read_response(char * fifo);
+void free_request(t_requestADT req);
 
 int main()
 {
-  int server_fd, client_fd, cid_fd, cid;
+  int server_fd;
+  char buffer[BUFSIZE] = "\0"; // Buffer de input de stdin
+  t_response res;
+  t_requestADT req = create_request();
 
-  // El fifo del cliente lo tiene que dar el servidor para asegurarse que cada
-  // cliente tenga un nombre distinto.
+  server_fd = open(SERVER_FIFO_PATH, O_WRONLY);
 
-  t_request req = { .msg_len = sizeof(ID_SIGNAL), .msg = ID_SIGNAL, \
-    .fifo_len = sizeof(CID_FIFO), .res_fifo = CID_FIFO};
+  while (1) {
+    fgets(buffer, BUFSIZE, stdin);    // lee input de entrada estandar
+    buffer[strlen(buffer)-1] = '\0';  // borra el '\n' final
 
-  send_request(SERVER_FIFO_PATH, req);
-  printf("Request sent by client\n");
+    if (strcmp(buffer, LEAVE) == 0) { // se recibió LEAVE --> nos vamos
+      close(server_fd);
+      free_request(req);
+      return 0;
+    }
 
-  t_response res = read_response(CID_FIFO);
+    set_request_msg(req, buffer);     // settea el input en el request
+    printf("Sendig request...\n");
+    res = send_request(server_fd, req);    // envía request y recibe respuesta
+    printf("Request sent by client and received response:\n%s\n", res.msg);
+  }
 
-  printf("Response read by client\n");
-  printf("msg: %d\n", res.msg_len);
-  printf("str: %s\n", res.msg);
+  return 1;
 }
 
-void send_request(char * fifo, t_request req) {
-  int fd = open(fifo, O_RDWR);
-  write(fd, &req.msg_len, sizeof(int));
-  write(fd, req.msg, req.msg_len);
-  write(fd, &req.fifo_len, sizeof(int));
-  write(fd, req.res_fifo, req.fifo_len);
-  close(fd);
+// Crea nuevo request
+t_requestADT create_request() {
+  t_requestADT req = malloc(sizeof(t_request));
+
+  sprintf(req->res_fifo, CLIENT_FIFO_PATH, getpid());  // Crea nombre unico para fifo del cliente
+  
+  mkfifo(req->res_fifo, 0666);  // Crea fifo
+  return req;
 }
 
+void free_request(t_requestADT req) {
+  unlink(req->res_fifo); // borra fifo
+  free(req);
+}
+
+void set_request_msg(t_requestADT req, char *msg) {
+  strcpy(req->msg, msg);
+}
+
+// Envia un request y devuelve su respuesta.
+t_response send_request(int fd, t_requestADT req) {
+  write(fd, req, sizeof(t_request));
+  return read_response(req->res_fifo);
+}
+
+// Devuelve la respuesta a un request. 
+// Solo debe ser llamado por send_request.
 t_response read_response(char * fifo) {
   t_response res;
-  int fd = open(fifo, O_RDWR);
-  read(fd, &res.msg_len, sizeof(int));
-  res.msg = malloc(res.msg_len);
-  read(fd, res.msg, res.msg_len);
+  int fd = open(fifo, O_RDONLY);
+  read(fd, &res, sizeof(t_response));
   close(fd);
   return res;
 }

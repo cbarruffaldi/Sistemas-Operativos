@@ -1,0 +1,3 @@
+Abrir y cerrar fifos luego de cada mensaje enviado o abrir una sola vez, enviar todo y luego cerrar?
+
+Vale abrir para RDWR o se debería hacer un nuevo open cada vez que no hay cliente con pipe hacia servidor abierto?

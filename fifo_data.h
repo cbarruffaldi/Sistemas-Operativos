@@ -3,24 +3,25 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #define SERVER_FIFO_PATH "fifo_server"
-#define CID_FIFO "fifo_cid"
-#define ID_SIGNAL "GIVE_ME_ID"
+#define CLIENT_FIFO_PATH "fifo_client%d"  // Se le concatena el client PID. Se asegura unicidad.
 
 #define MAX_CLIENTS 32
 #define CLIENT_FIFO_LEN 16
 
+#define BUFSIZE 1024
+
 typedef struct {
-  int msg_len;
-  char * msg;
-  int fifo_len;
-  char * res_fifo;
+  char msg[BUFSIZE];
+  char res_fifo[BUFSIZE];
 } t_request;
 
 typedef struct {
-  int msg_len;
-  char * msg;
+  char msg[BUFSIZE];
 } t_response;
+
+typedef t_request * t_requestADT;

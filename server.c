@@ -1,76 +1,64 @@
 #include "fifo_data.h"
 
-char * build_client_fifo(int cid);
-void send_response(char * fifo, t_response res);
-t_request read_request(char * fifo);
+#define SHUTDOWN "shutdown"
 
-#define IS_CID_SIGNAL(s) (strcmp(s, ID_SIGNAL) == 0)
+void get_request_msg(t_requestADT req, char *buffer);
+void send_response(t_requestADT, t_response res);
+t_requestADT read_request(int fd);
 
-int main()
+int main() 
 {
-  int cid = 0;
-  char * new_fifo;
-  // Cliente manda señal por el server fifo para pedir CID y el server devuelve
-  // el nombre del fifo por el cual se va a comunicar con ese determinado cliente.
+  t_response res = {.msg = "HEY!"};
+  t_requestADT req;
 
-  t_response res;
-  t_request req;
+  char msg[BUFSIZE];
+
+  printf("Opening pipe...\n");
+  int fd = open(SERVER_FIFO_PATH, O_RDWR);
+
+  if (fd < 0) {
+    printf("Could not open pipe\n");
+    return 1;
+  }
 
   printf("Server listening\n");
 
   while (1) {
-    req = read_request(SERVER_FIFO_PATH);
+    printf("Reading request...\n");
+    req = read_request(fd);
+    get_request_msg(req, msg);      // Copia el mensaje de req en msg
     printf("Request read by server\n");
-    printf("msg: %d - %s\n", req.msg_len, req.msg);
-    printf("fifo: %d - %s\n", req.fifo_len, req.res_fifo);
+    printf("msg: %s\n", msg);
+    printf("fifo: %s\n", req->res_fifo);  // TODO: ver si hacer getter para el res_fifo
 
-    if (IS_CID_SIGNAL(req.msg)) { // cliente nuevo pide CID
-      new_fifo = build_client_fifo(cid);
-      res.msg = new_fifo;
-      res.msg_len = CLIENT_FIFO_LEN;
+    send_response(req, res);    // Responde a cliente
 
-      mkfifo(new_fifo, 0666);
-      cid++;
-    } else {
-      res.msg = "HEY!";
-      res.msg_len = 5;
+    if (strcmp(SHUTDOWN, msg) == 0) {
+      printf("Shutting down...\n");
+      close(fd);
+      unlink(SERVER_FIFO_PATH);
+      return 0;
     }
-    send_response(req.res_fifo, res);
   }
 }
 
-// Manda un int con el largo (bytes) del mensaje y luego el mensaje
-void send_response(char * fifo, t_response res) {
+// Getter de msg. Copia el mensaje en buffer.
+void get_request_msg(t_requestADT req, char *buffer) {
+  strcpy(buffer, req->msg);
+}
+
+// Responde al cliente que envió req
+void send_response(t_requestADT req, t_response res) {
   // TODO: Si es muy costoso abrir y cerrar asi lo hacemos de otra forma
-  int fd = open(fifo, O_RDWR);
-  write(fd, &res.msg_len, sizeof(int));
-  write(fd, res.msg, res.msg_len);
+  int fd = open(req->res_fifo, O_WRONLY);
+  write(fd, &res, sizeof(res));
   close(fd);
+  free(req);
 }
 
-t_request read_request(char * fifo) {
-  t_request req;
-  int fd = open(fifo, O_RDWR);
-
-  // lee largo del mensaje
-  read(fd, &req.msg_len, sizeof(int));
-
-  // crea espacio y lee mensaje según largo dado
-  req.msg = malloc(req.msg_len);
-  read(fd, req.msg, req.msg_len);
-
-  // lee largo del named pipe
-  read(fd, &req.fifo_len, sizeof(int));
-
-  // crea espacio y lee path del pipe según largo dado
-  req.res_fifo = malloc(req.fifo_len);
-  read(fd, req.res_fifo, req.fifo_len);
-  close(fd);
+// Lee request. Se bloquea hasta que se envíe alguno.
+t_requestADT read_request(int fd) {
+  t_requestADT req = malloc(sizeof(t_request));
+  read(fd, req, sizeof(t_request));
   return req;
-}
-
-char * build_client_fifo(int cid) {
-  char * fifo = malloc(CLIENT_FIFO_LEN);
-  sprintf(fifo, "%s%06d", "client_n_", cid);
-  return fifo;
 }
