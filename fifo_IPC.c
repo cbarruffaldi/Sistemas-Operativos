@@ -9,9 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-
 static t_response read_response(char * fifo);
-
 
 struct t_address {
   char path[BUFSIZE];
@@ -30,6 +28,10 @@ t_addressADT create_address(char * path) {
   t_addressADT addr = malloc(sizeof(struct t_address));
   strcpy(addr->path, path);
   return addr;
+}
+
+void free_address(t_addressADT addr) {
+  free(addr);
 }
 
 t_connectionADT connect(t_addressADT addr) {
@@ -62,7 +64,6 @@ t_connectionADT listen(t_addressADT addr) {
 t_requestADT create_request(t_addressADT addr) {
   t_requestADT req = malloc(sizeof(struct t_request));
   req->res_addr = *addr;
-  // sprintf(req->res_fifo, CLIENT_FIFO_PATH, getpid());  // Crea nombre unico para fifo del cliente
 
   mkfifo((req->res_addr).path, 0666);  // Crea fifo
 
@@ -86,13 +87,6 @@ t_response send_request(t_connectionADT con, t_requestADT req) {
   return read_response((req->res_addr).path);
 }
 
-// Lee request. Se bloquea hasta que se envíe alguno.
-t_requestADT read_request(t_connectionADT con) {
-  t_requestADT req = malloc(sizeof(struct t_request));
-  read(con->fd, req, sizeof(struct t_request));
-  return req;
-}
-
 // Devuelve la respuesta a un request.
 static t_response read_response(char * fifo) {
   t_response res;
@@ -100,6 +94,13 @@ static t_response read_response(char * fifo) {
   read(fd, &res, sizeof(t_response));
   close(fd);
   return res;
+}
+
+// Lee request. Se bloquea hasta que se envíe alguno.
+t_requestADT read_request(t_connectionADT con) {
+  t_requestADT req = malloc(sizeof(struct t_request));
+  read(con->fd, req, sizeof(struct t_request));
+  return req;
 }
 
 // Getter de msg. Copia el mensaje en buffer.
