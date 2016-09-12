@@ -3,7 +3,6 @@
 void read_request(int sock);
 void send_response(int sock);
 
-
 int main( int argc, char *argv[] ) {
    int sockfd, newsockfd;  /*File Descriptors */
    int port_num;    /*Numero de Puerto */

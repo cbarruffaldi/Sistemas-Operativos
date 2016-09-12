@@ -44,8 +44,7 @@ int main(int argc, char *argv[]) {
    }
  
  	send_request(sockfd);
-  
-  	read_response(sockfd);
+  read_response(sockfd);
    
    return 0;
 }

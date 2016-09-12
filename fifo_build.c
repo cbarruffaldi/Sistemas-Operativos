@@ -1,4 +1,9 @@
-#include "fifo_data.h"
+#include "IPC.h"
+
+#define SERVER_FIFO_PATH "fifo_server"
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 int main()
 {
