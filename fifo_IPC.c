@@ -11,14 +11,19 @@
 
 static t_response read_response(char * fifo);
 
+// Representa una dirección de un peer
 struct t_address {
   char path[BUFSIZE];
 };
 
+// Representa una conexión con un peer.
+// Dependiendo de si fue creada con listen() o connect(), se puede leer o escribir respectivamente.
 struct t_connection {
   int fd;
 };
 
+// Representa un paquete a enviar.
+// Debe crearse con el t_address hacía el cual se responderá el request.
 struct t_request {
   char msg[BUFSIZE];
   struct t_address res_addr;
@@ -60,7 +65,8 @@ t_connectionADT listen(t_addressADT addr) {
 //   return open(SERVER_FIFO_PATH, O_RDWR); // Abre RDWR para que siempre exista abierto para Write
 // }
 
-// Crea nuevo request
+// Crea nuevo request.
+// Recibe address hacia donde se responderá el request.
 t_requestADT create_request(t_addressADT addr) {
   t_requestADT req = malloc(sizeof(struct t_request));
   req->res_addr = *addr;
@@ -96,7 +102,8 @@ static t_response read_response(char * fifo) {
   return res;
 }
 
-// Lee request. Se bloquea hasta que se envíe alguno.
+// Lee request de una conexión. 
+// Se bloquea hasta que se envíe alguno.
 t_requestADT read_request(t_connectionADT con) {
   t_requestADT req = malloc(sizeof(struct t_request));
   read(con->fd, req, sizeof(struct t_request));
