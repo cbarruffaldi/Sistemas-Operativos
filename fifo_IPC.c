@@ -11,19 +11,15 @@
 
 static t_response read_response(char * fifo);
 
-// Representa una dirección de un peer
 struct t_address {
   char path[BUFSIZE];
 };
 
-// Representa una conexión con un peer.
-// Dependiendo de si fue creada con listen() o connect(), se puede leer o escribir respectivamente.
 struct t_connection {
+  struct t_address addr;
   int fd;
 };
 
-// Representa un paquete a enviar.
-// Debe crearse con el t_address hacía el cual se responderá el request.
 struct t_request {
   char msg[BUFSIZE];
   struct t_address res_addr;
@@ -39,15 +35,16 @@ void free_address(t_addressADT addr) {
   free(addr);
 }
 
-t_connectionADT connect(t_addressADT addr) {
+t_connectionADT connect(t_addressADT a) {
   t_connectionADT con = malloc(sizeof(struct t_connection));
-  con->fd = open(addr->path, O_WRONLY);
+  con->fd = open(a->path, O_WRONLY);
+  con->addr = *a;
   return con;
 }
 
 void disconnect(t_connectionADT con) { // void?
   close(con->fd);
-  // free
+  free(con);
 }
 
 t_connectionADT listen(t_addressADT addr) {
@@ -57,40 +54,34 @@ t_connectionADT listen(t_addressADT addr) {
   return con;                           // abierto pendiente de un write
 }
 
-// int server_WR_fd() {
-//   return open(SERVER_FIFO_PATH, O_WRONLY);
-// }
-//
-// int server_RD_fd() {
-//   return open(SERVER_FIFO_PATH, O_RDWR); // Abre RDWR para que siempre exista abierto para Write
-// }
+// Cierra el file descriptor de la conexión y borra el fifo asociado.
+void unlisten(t_connectionADT con) {
+  unlink(con->addr.path);
+  disconnect(con);
+}
 
-// Crea nuevo request.
-// Recibe address hacia donde se responderá el request.
 t_requestADT create_request(t_addressADT addr) {
   t_requestADT req = malloc(sizeof(struct t_request));
   req->res_addr = *addr;
 
-  mkfifo((req->res_addr).path, 0666);  // Crea fifo
+  mkfifo(req->res_addr.path, 0666);  // Crea fifo
 
   return req;
 }
 
 // Libera el request y borra el fifo asociado.
 void free_request(t_requestADT req) {
-  unlink((req->res_addr).path);
+  unlink(req->res_addr.path);
   free(req);
 }
 
-// Settea el mensaje del request.
 void set_request_msg(t_requestADT req, char *msg) {
   strcpy(req->msg, msg);
 }
 
-// Envia un request y devuelve su respuesta.
 t_response send_request(t_connectionADT con, t_requestADT req) {
   write(con->fd, req, sizeof(struct t_request));
-  return read_response((req->res_addr).path);
+  return read_response(req->res_addr.path);
 }
 
 // Devuelve la respuesta a un request.
@@ -102,22 +93,18 @@ static t_response read_response(char * fifo) {
   return res;
 }
 
-// Lee request de una conexión. 
-// Se bloquea hasta que se envíe alguno.
 t_requestADT read_request(t_connectionADT con) {
   t_requestADT req = malloc(sizeof(struct t_request));
   read(con->fd, req, sizeof(struct t_request));
   return req;
 }
 
-// Getter de msg. Copia el mensaje en buffer.
 void get_request_msg(t_requestADT req, char *buffer) {
   strcpy(buffer, req->msg);
 }
 
-// Responde al cliente que envió req
 void send_response(t_requestADT req, t_response res) {
-  int fd = open((req->res_addr).path, O_WRONLY);
+  int fd = open(req->res_addr.path, O_WRONLY);
   write(fd, &res, sizeof(res));
   close(fd);
   free(req);

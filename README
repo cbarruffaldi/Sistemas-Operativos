@@ -1,7 +1,7 @@
-1- Ejecutar build.sh (limpia y compila lo necesario).
+1- Hacer make.
 2- Ejecutar server.
-3- Ejecutar n clients en otra terminal.
+3- Ejecutar n clients en otras terminales.
 4- Escribir input en terminales de client.
 
-Escribiendo "shutdown" se apaga el server.
 Escribiendo "leave" se cierra el cliente.
+Escribiendo "shutdown" se apaga el server.

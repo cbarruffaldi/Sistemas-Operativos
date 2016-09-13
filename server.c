@@ -14,7 +14,6 @@ int main()
   char msg[BUFSIZE];
 
   printf("Opening pipe...\n");
-  // int fd = server_RD_fd();
   t_addressADT server_addr = create_address(SERVER_FIFO_PATH);
 
   t_connectionADT sv_con = listen(server_addr);
@@ -37,8 +36,7 @@ int main()
 
     if (strcmp(SHUTDOWN, msg) == 0) {
       printf("Shutting down...\n");
-      disconnect(sv_con);
-//    unlink(SERVER_FIFO_PATH); TODO: función que borre fifos
+      unlisten(sv_con);
       return 0;
     }
   }
