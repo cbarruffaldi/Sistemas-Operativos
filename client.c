@@ -5,21 +5,24 @@
 #include <unistd.h>
 
 #define LEAVE "leave"  // Si se envia LEAVE se cierra el cliente
-#define PEER_FIFO_PATH "fifo-peer-%d"  // Se le concatena el client PID. Se asegura unicidad.
+#define ARG_COUNT 2
 
-int main()
+int main(int argc, char *argv[])
 {
-  t_addressADT sv_addr = create_address(SERVER_FIFO_PATH);
+  
+  if(argc != ARG_COUNT) {
+    fprintf(stderr, "Usage: %s <server_path>", argv[0]);
+	return 1;
+  }
+
+  t_addressADT sv_addr = create_address(argv[1]);
 
   t_connectionADT sv_conn = connect(sv_addr);
 
   char buffer[BUFSIZE] = "\0"; // Buffer de input de stdin
   t_response res;
 
-  char peer_path[BUFSIZE];
-  sprintf(peer_path, PEER_FIFO_PATH, getpid());
-  t_addressADT peer_addr = create_address(peer_path);
-  t_requestADT req = create_request(peer_addr);
+  t_requestADT req = create_request();
 
   printf("Client communicated to server\n");
   while (1) {

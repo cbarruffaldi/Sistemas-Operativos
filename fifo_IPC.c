@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define FIFO_PEER_PATH "fifo_peer_%d"  // Se le concatena el peer PID. Se asegura unicidad.
+
 static t_response read_response(char * fifo);
 
 struct t_address {
@@ -38,6 +40,10 @@ void free_address(t_addressADT addr) {
 t_connectionADT connect(t_addressADT a) {
   t_connectionADT con = malloc(sizeof(struct t_connection));
   con->fd = open(a->path, O_WRONLY);
+
+  if (fd < 0)
+    return NULL;
+
   con->addr = *a;
   return con;
 }
@@ -48,8 +54,11 @@ void disconnect(t_connectionADT con) { // void?
 }
 
 t_connectionADT listen(t_addressADT addr) {
-  mkfifo(addr->path, 0666);
+  if (mkfifo(addr->path, 0666) != 0)
+    return NULL;
+
   t_connectionADT con = malloc(sizeof(struct t_connection));
+  strcpy(con->addr.path, addr->path);
   con->fd = open(addr->path, O_RDWR);   // Solo lee pero es RDWR para que siempre esté
   return con;                           // abierto pendiente de un write
 }
@@ -60,11 +69,14 @@ void unlisten(t_connectionADT con) {
   disconnect(con);
 }
 
-t_requestADT create_request(t_addressADT addr) {
+t_requestADT create_request() {
   t_requestADT req = malloc(sizeof(struct t_request));
-  req->res_addr = *addr;
+  struct t_address res_addr;
+  sprintf(res_addr.path, FIFO_PEER_PATH, getpid());
+  req->res_addr = res_addr;
 
-  mkfifo(req->res_addr.path, 0666);  // Crea fifo
+  if(mkfifo(res_addr.path, 0666) != 0);  // Crea fifo
+    return NULL;
 
   return req;
 }
@@ -103,9 +115,12 @@ void get_request_msg(t_requestADT req, char *buffer) {
   strcpy(buffer, req->msg);
 }
 
-void send_response(t_requestADT req, t_response res) {
+int send_response(t_requestADT req, t_response res) {
   int fd = open(req->res_addr.path, O_WRONLY);
+  if (fd < 0)
+    return -1;
   write(fd, &res, sizeof(res));
   close(fd);
   free(req);
+  return 0;
 }

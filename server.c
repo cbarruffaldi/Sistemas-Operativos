@@ -1,27 +1,29 @@
 #include "IPC.h"
 
 #define SHUTDOWN "shutdown" // Si recibe "shutdown" se apaga el server
+#define ARG_COUNT 2
 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-int main()
+int main(int argc, char *argv[])
 {
+
+  if(argc != ARG_COUNT) {
+    fprintf(stderr, "Usage: %s <server_path>", argv[0]);
+  return 1;
+  }
+
   t_response res = {.msg = "HEY!"};
   t_requestADT req;
 
   char msg[BUFSIZE];
 
-  printf("Opening pipe...\n");
-  t_addressADT server_addr = create_address(SERVER_FIFO_PATH);
+  printf("Opening channel...\n");
+  t_addressADT server_addr = create_address(argv[1]);
 
   t_connectionADT sv_con = listen(server_addr);
-
-  // if (fd < 0) {
-  //   printf("Could not open pipe\n");
-  //   return 1;
-  // }
 
   printf("Server listening\n");
 

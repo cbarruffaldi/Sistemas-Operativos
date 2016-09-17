@@ -7,10 +7,6 @@ typedef struct {
   char msg[BUFSIZE];
 } t_response;
 
-#define SERVER_FIFO_PATH "fifo_server"
-// #define SERVER_ADDRESS create_address(SERVER_FIFO_PATH);
-// TODO: Esta bien que la API contemple algo de server/client?
-
 // Representa un paquete a enviar.
 // Debe crearse con el t_address hacía el cual se responderá el request.
 typedef struct t_request * t_requestADT;
@@ -24,8 +20,7 @@ typedef struct t_address * t_addressADT;
 typedef struct t_connection * t_connectionADT;
 
 // Crea nuevo request.
-// Recibe address hacia donde se responderá el request.
-t_requestADT create_request(t_addressADT addr);
+t_requestADT create_request();
 
 // Settea el mensaje del request.
 void set_request_msg(t_requestADT req, char *msg);
@@ -37,14 +32,14 @@ t_response send_request(t_connectionADT con, t_requestADT req);
 // Esto podría reemplazar a create_request + set_request_msg + send_request
 
 // TODO: ??? Que hace free_request segun la api? Porque ademas de usarla para memoria la usamos para cerrar el fifo en la implementacion.
-// Libera la memoria asociada al request.
+// Libera la memoria y recursos asociados al request.
 void free_request(t_requestADT req);
 
 // Crea el adress correspondiente al string dado.
 t_addressADT create_address(char * path);
 
 // Abre una nueva conexión hacia el address dado.
-// El peer que invoca esta función para conectarse, sólo podrá escribir a
+// El peer que invoca esta función para conectarse sólo podrá escribir a
 // través de esta conexión.
 t_connectionADT connect(t_addressADT addr);
 
@@ -65,7 +60,7 @@ t_requestADT read_request(t_connectionADT con);
 // Getter de la info en el request. Copia el mensaje en buffer. Buffer debe tener 1024 bytes de espacio.
 void get_request_msg(t_requestADT req, char *buffer);
 
-// Responde al cliente que envió el request dado como parámetro.
+// Responde al peer que envió el request dado como parámetro.
 void send_response(t_requestADT req, t_response res);
 
 #endif

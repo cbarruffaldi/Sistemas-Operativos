@@ -1,6 +1,6 @@
 1- Hacer make.
-2- Ejecutar server.
-3- Ejecutar n clients en otras terminales.
+2- Ejecutar server pasando como argumento nombre de fifo donde escuchará (por ej ./server.bin servidor)
+3- Ejecutar n clients en otras terminales pasando como argumento fifo del servidor (por ej ./client.bin servidor)
 4- Escribir input en terminales de client.
 
 Escribiendo "leave" se cierra el cliente.
