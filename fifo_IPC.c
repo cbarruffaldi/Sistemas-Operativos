@@ -57,8 +57,6 @@ t_connectionADT listen_peer(t_addressADT addr) {
   if (mkfifo(addr->path, 0666) < 0)
     return NULL;
 
-  printf("asd\n");
-
   t_connectionADT con = malloc(sizeof(struct t_connection));
   strcpy(con->addr.path, addr->path);
   con->fd = open(addr->path, O_RDWR);   // Solo lee pero es RDWR para que siempre esté

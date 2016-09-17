@@ -32,14 +32,18 @@ int main(int argc, char *argv[])
     printf("Reading request...\n");
 
     if ((req = read_request(sv_con)) == NULL)  {
-      perror("error sending request\n");
+      fprintf(stderr, "error reading request\n");
+      return 1;
     }
 
     get_request_msg(req, msg);      // Copia el mensaje de req en msg
     printf("Request read by server\n");
     printf("msg: %s\n", msg);
 
-    send_response(req, res);    // Responde a cliente
+    if (send_response(req, res) < 0) {   // Responde a cliente
+      fprintf(stderr, "error sending response\n");
+      return 1;
+    }
 
     if (strcmp(SHUTDOWN, msg) == 0) {
       printf("Shutting down...\n");
