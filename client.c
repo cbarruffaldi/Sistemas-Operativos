@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 
   t_addressADT sv_addr = create_address(argv[1]);
 
-  t_connectionADT sv_conn = connect(sv_addr);
+  t_connectionADT sv_conn = connect_peer(sv_addr);
 
   char buffer[BUFSIZE] = "\0"; // Buffer de input de stdin
   t_response res;

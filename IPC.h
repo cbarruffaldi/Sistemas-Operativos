@@ -41,14 +41,14 @@ t_addressADT create_address(char * path);
 // Abre una nueva conexión hacia el address dado.
 // El peer que invoca esta función para conectarse sólo podrá escribir a
 // través de esta conexión.
-t_connectionADT connect(t_addressADT addr);
+t_connectionADT connect_peer(t_addressADT addr);
 
 // Cierra la conexión.
 void disconnect(t_connectionADT con);
 
 // Abre una nueva conexión por la cual el peer leerá requests que sean enviados
 // al address pasado como parámetro.
-t_connectionADT listen(t_addressADT addr);
+t_connectionADT listen_peer(t_addressADT addr);
 
 // Cierra la conexión por la cual el peer leía requests.
 void unlisten(t_connectionADT con);

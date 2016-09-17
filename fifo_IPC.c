@@ -37,7 +37,7 @@ void free_address(t_addressADT addr) {
   free(addr);
 }
 
-t_connectionADT connect(t_addressADT a) {
+t_connectionADT connect_peer(t_addressADT a) {
   t_connectionADT con = malloc(sizeof(struct t_connection));
   con->fd = open(a->path, O_WRONLY);
 
@@ -53,7 +53,7 @@ void disconnect(t_connectionADT con) { // void?
   free(con);
 }
 
-t_connectionADT listen(t_addressADT addr) {
+t_connectionADT listen_peer(t_addressADT addr) {
   if (mkfifo(addr->path, 0666) != 0)
     return NULL;
 

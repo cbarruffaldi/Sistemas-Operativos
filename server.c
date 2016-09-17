@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 int main(int argc, char *argv[])
 {
@@ -23,13 +24,17 @@ int main(int argc, char *argv[])
   printf("Opening channel...\n");
   t_addressADT server_addr = create_address(argv[1]);
 
-  t_connectionADT sv_con = listen(server_addr);
+  t_connectionADT sv_con = listen_peer(server_addr);
 
   printf("Server listening\n");
 
   while (1) {
     printf("Reading request...\n");
-    req = read_request(sv_con);
+
+    if ((req = read_request(sv_con)) == NULL)  {
+      perror("error sending request\n");
+    }
+
     get_request_msg(req, msg);      // Copia el mensaje de req en msg
     printf("Request read by server\n");
     printf("msg: %s\n", msg);
