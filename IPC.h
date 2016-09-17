@@ -61,6 +61,6 @@ t_requestADT read_request(t_connectionADT con);
 void get_request_msg(t_requestADT req, char *buffer);
 
 // Responde al peer que envió el request dado como parámetro.
-void send_response(t_requestADT req, t_response res);
+int send_response(t_requestADT req, t_response res);
 
 #endif

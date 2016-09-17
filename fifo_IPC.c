@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define FIFO_PEER_PATH "fifo_peer_%d"  // Se le concatena el peer PID. Se asegura unicidad.
+#define FIFO_PEER_PATH "/tmp/fifo_peer_%d"  // Se le concatena el peer PID. Se asegura unicidad.
 
 static t_response read_response(char * fifo);
 
@@ -41,7 +41,7 @@ t_connectionADT connect(t_addressADT a) {
   t_connectionADT con = malloc(sizeof(struct t_connection));
   con->fd = open(a->path, O_WRONLY);
 
-  if (fd < 0)
+  if (con->fd < 0)
     return NULL;
 
   con->addr = *a;
@@ -54,8 +54,10 @@ void disconnect(t_connectionADT con) { // void?
 }
 
 t_connectionADT listen(t_addressADT addr) {
-  if (mkfifo(addr->path, 0666) != 0)
+  if (mkfifo(addr->path, 0666) < 0)
     return NULL;
+
+  printf("asd\n");
 
   t_connectionADT con = malloc(sizeof(struct t_connection));
   strcpy(con->addr.path, addr->path);
@@ -70,12 +72,12 @@ void unlisten(t_connectionADT con) {
 }
 
 t_requestADT create_request() {
-  t_requestADT req = malloc(sizeof(struct t_request));
   struct t_address res_addr;
+  t_requestADT req = malloc(sizeof(struct t_request));
   sprintf(res_addr.path, FIFO_PEER_PATH, getpid());
   req->res_addr = res_addr;
 
-  if(mkfifo(res_addr.path, 0666) != 0);  // Crea fifo
+  if(mkfifo(res_addr.path, 0666) < 0)  // Crea fifo
     return NULL;
 
   return req;
