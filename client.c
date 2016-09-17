@@ -26,8 +26,10 @@ int main(int argc, char *argv[])
 
   printf("Client communicated to server\n");
   while (1) {
+    printf("> ");
     fgets(buffer, BUFSIZE, stdin);    // lee input de entrada estandar
     buffer[strlen(buffer) - 1] = '\0';  // borra el '\n' final
+
 
     if (strcmp(buffer, LEAVE) == 0) { // se recibió LEAVE --> nos vamos
       free_request(req); // TODO: raro el free_request
