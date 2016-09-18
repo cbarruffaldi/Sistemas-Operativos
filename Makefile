@@ -1,9 +1,15 @@
 FLAGS=-Wall -Wextra -g
+CLIENT=client.c
+SERVER=server.c
 
-all:
-	rm -f -v fifo_server fifo-peer-*
-	gcc $(FLAGS) client.c fifo_IPC.c -o client.bin
-	gcc $(FLAGS) server.c fifo_IPC.c -o server.bin
+sockets:
+	gcc $(FLAGS) $(CLIENT) sockets_IPC.c -o client.bin
+	gcc $(FLAGS) $(SERVER) sockets_IPC.c -o server.bin
+
+fifo:
+	rm -f -v fifo_server fifo_peer_*
+	gcc $(FLAGS) $(CLIENT) fifo_IPC.c -o client.bin
+	gcc $(FLAGS) $(SERVER) fifo_IPC.c -o server.bin
 
 clean:
 	rm -v *.bin
