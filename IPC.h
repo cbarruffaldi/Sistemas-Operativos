@@ -14,11 +14,6 @@ typedef struct t_request * t_requestADT;
 // Representa la dirección de un peer.
 typedef struct t_address * t_addressADT;
 
-// Representa una conexión con un peer.
-// Dependiendo de si fue creada con listen() o connect(),
-// se puede leer o escribir respectivamente.
-typedef struct t_connection * t_connectionADT;
-
 // Crea nuevo request.
 t_requestADT create_request();
 
@@ -26,7 +21,8 @@ t_requestADT create_request();
 void set_request_msg(t_requestADT req, char *msg);
 
 // Envia un request y devuelve su respuesta.
-t_response send_request(t_connectionADT con, t_requestADT req);
+// En caso de error t_response.msg es un string vacío.
+t_response send_request(t_addressADT con, t_requestADT req);
 
 // send_request(t_connectionADT con, t_addressADT addr, char *msg);
 // Esto podría reemplazar a create_request + set_request_msg + send_request
@@ -35,27 +31,21 @@ t_response send_request(t_connectionADT con, t_requestADT req);
 // Libera la memoria y recursos asociados al request.
 void free_request(t_requestADT req);
 
-// Crea el adress correspondiente al string dado.
+// Crea el address correspondiente al path dado.
 t_addressADT create_address(char * path);
 
-// Abre una nueva conexión hacia el address dado.
-// El peer que invoca esta función para conectarse sólo podrá escribir a
-// través de esta conexión.
-t_connectionADT connect_peer(t_addressADT addr);
+// Libera la memoria y recursos asociados al address.
+void free_address(t_addressADT addr);
 
-// Cierra la conexión.
-void disconnect(t_connectionADT con);
-
-// Abre una nueva conexión por la cual el peer leerá requests que sean enviados
-// al address pasado como parámetro.
-t_connectionADT listen_peer(t_addressADT addr);
+// Permite que puedan leerse request a partir de la address pasada como parámetro.
+int listen_peer(t_addressADT addr);
 
 // Cierra la conexión por la cual el peer leía requests.
-void unlisten(t_connectionADT con);
+void unlisten_peer(t_addressADT con);
 
-// Lee request de una conexión.
+// Lee request de un address previamente abierto para leer a partir de listen_peer.
 // Se bloquea hasta que se envíe alguno.
-t_requestADT read_request(t_connectionADT con);
+t_requestADT read_request(t_addressADT con);
 
 // Getter de la info en el request. Copia el mensaje en buffer. Buffer debe tener 1024 bytes de espacio.
 void get_request_msg(t_requestADT req, char *buffer);

@@ -12,21 +12,14 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <errno.h>
 
 #define MAX_CONNECTIONS 10
 #define PORT 5001
 
-static t_connectionADT init_connection(t_addressADT addr);
-
 struct t_address {
   char hostname[BUFSIZE];
+  int listen_fd;
   struct sockaddr_in sockaddr;
-};
-
-struct t_connection {
-  struct t_address addr;
-  int fd;
 };
 
 struct t_request {
@@ -43,30 +36,18 @@ void set_request_msg(t_requestADT req, char *msg) {
   strcpy(req->msg, msg);
 }
 
-t_response send_request(t_connectionADT con, t_requestADT req) {
+t_response send_request(t_addressADT addr, t_requestADT req) {
   t_response res = {.msg = "\0"};
-  struct t_address addr = con->addr;
+  int fd = socket(AF_INET, SOCK_STREAM, 0);
 
-  if (connect(con->fd, (struct sockaddr *) &(addr.sockaddr), sizeof(addr.sockaddr)) < 0) {
-    disconnect(con);
-    perror("devolviendo NULL\n");
+  if (connect(fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0)
     return res;
-  }
 
-  printf("IPC sending req\n");
-  if (send(con->fd, req, (sizeof(struct t_request)), 0) <= 0)
-    perror("error sending req\n");
-  else
-    printf("IPC req sent\n");
+  // Pide respuesta si se pudo enviar el request
+  if (send(fd, req, (sizeof(struct t_request)), 0) > 0)
+    recv(fd, &res, (sizeof(res)), 0);
 
-  printf("IPC receiving resp\n");
-  if (recv(con->fd, &res, (sizeof(res)), 0) <= 0)
-    perror("error receiving resp\n");
-  else  
-    printf("IPC resp received\n");
-
-  close(con->fd);
-  con->fd = socket(AF_INET, SOCK_STREAM, 0);
+  close(fd);
 
   return res;
 }
@@ -80,10 +61,8 @@ t_addressADT create_address(char * hostname) {
   struct sockaddr_in sockaddr;
   t_addressADT addr;
 
- if ((he = gethostbyname(hostname)) == NULL) {
-    perror("devolviendo NULL hostbyname\n");
+ if ((he = gethostbyname(hostname)) == NULL)
     return NULL;
- }
 
   addr = malloc(sizeof(struct t_address));
 
@@ -99,47 +78,40 @@ t_addressADT create_address(char * hostname) {
   return addr;
 }
 
-t_connectionADT connect_peer(t_addressADT addr) {
-  t_connectionADT con = init_connection(addr);
-
-  return con;
+void free_address(t_addressADT addr) {
+  free(addr);
 }
 
-void disconnect(t_connectionADT con) {
-  free(con);
-}
+int listen_peer(t_addressADT addr) {
+  addr->listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-t_connectionADT listen_peer(t_addressADT addr) {
-  t_connectionADT con = init_connection(addr);
-
-  if (bind(con->fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0 ||
-                listen(con->fd, MAX_CONNECTIONS) < 0) {
-    unlisten(con);
-    perror("devolviendo NULL\n");
-    return NULL;
+  if (bind(addr->listen_fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0 ||
+                listen(addr->listen_fd, MAX_CONNECTIONS) < 0) {
+    return -1;
   }
 
-  return con;
+  return 0;
 }
 
-void unlisten(t_connectionADT con) {
-  free(con);
+void unlisten_peer(t_addressADT addr) {
+  close(addr->listen_fd);
 }
 
-t_requestADT read_request(t_connectionADT con) {
+t_requestADT read_request(t_addressADT addr) {
   struct sockaddr_in peer_sockaddr;
   unsigned int peer_len = sizeof(peer_sockaddr);
   int peer_sock;
   t_requestADT req;
 
-  printf("awaiting accept\n");
-  if ((peer_sock = accept(con->fd, (struct sockaddr *) &peer_sockaddr, &peer_len)) < 0) {
-    perror("devolviendo NULL\n");
+  if ((peer_sock = accept(addr->listen_fd, (struct sockaddr *) &peer_sockaddr, &peer_len)) < 0)
+    return NULL;
+
+  req = malloc(sizeof(struct t_request));
+  if (recv(peer_sock, req, sizeof(struct t_request), 0) < 1) {
+    free(req);
     return NULL;
   }
 
-  req = malloc(sizeof(struct t_request));
-  recv(peer_sock, req, sizeof(struct t_request), 0);
   req->res_fd = peer_sock;
 
   return req;
@@ -150,20 +122,10 @@ void get_request_msg(t_requestADT req, char *buffer) {
 }
 
 int send_response(t_requestADT req, t_response res) {
-  printf("Sending res\n");
-  if (send(req->res_fd, &res, sizeof(res), 0) < 1)
-    return -1;
+  int n = send(req->res_fd, &res, sizeof(res), 0);
 
   close(req->res_fd);
   free_request(req);
 
-  return 0;
-}
-
-static t_connectionADT init_connection(t_addressADT addr) {
-  t_connectionADT con = malloc(sizeof(struct t_connection));
-  con->fd = socket(AF_INET, SOCK_STREAM, 0);
-  con->addr = *addr;
-
-  return con;
+  return n < 1 ? -1 : 0;
 }

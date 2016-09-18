@@ -22,16 +22,19 @@ int main(int argc, char *argv[])
   char msg[BUFSIZE];
 
   printf("Opening channel...\n");
-  t_addressADT server_addr = create_address(argv[1]);
+  t_addressADT sv_addr = create_address(argv[1]);
 
-  t_connectionADT sv_con = listen_peer(server_addr);
+  if (listen_peer(sv_addr) < 0) {
+    fprintf(stderr, "Cannot listen\n");
+    return 1;
+  }
 
   printf("Server listening\n");
 
   while (1) {
     printf("Reading request...\n");
 
-    if ((req = read_request(sv_con)) == NULL)  {
+    if ((req = read_request(sv_addr)) == NULL)  {
       fprintf(stderr, "error reading request\n");
       return 1;
     }
@@ -47,7 +50,8 @@ int main(int argc, char *argv[])
 
     if (strcmp(SHUTDOWN, msg) == 0) {
       printf("Shutting down...\n");
-      unlisten(sv_con);
+      unlisten_peer(sv_addr);
+      free_address(sv_addr);
       return 0;
     }
   }
