@@ -38,6 +38,8 @@ void free_request(t_requestADT req);
 // Crea el adress correspondiente al string dado.
 t_addressADT create_address(char * path);
 
+void free_address(t_addressADT addr);
+
 // Abre una nueva conexión hacia el address dado.
 // El peer que invoca esta función para conectarse sólo podrá escribir a
 // través de esta conexión.
@@ -55,7 +57,7 @@ int listen_peer(t_addressADT addr);
 t_connectionADT accept_peer(t_addressADT addr);
 
 // Cierra la conexión por la cual el peer leía requests.
-void unlisten(t_connectionADT con);
+void unlisten_peer(t_connectionADT con);
 
 // Lee request de una conexión.
 // Se bloquea hasta que se envíe alguno.

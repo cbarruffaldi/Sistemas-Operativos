@@ -12,14 +12,18 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <errno.h>
 
 #define MAX_CONNECTIONS 10
 #define PORT 5001
 
 struct t_address {
-  char hostname[BUFSIZE];
-  int listen_fd;
+  int listen_fd; // solo se usa si pasó por un listen
   struct sockaddr_in sockaddr;
+};
+
+struct t_connection {
+  int fd;
 };
 
 struct t_request {
@@ -36,18 +40,12 @@ void set_request_msg(t_requestADT req, char *msg) {
   strcpy(req->msg, msg);
 }
 
-t_response send_request(t_addressADT addr, t_requestADT req) {
+t_response send_request(t_connectionADT con, t_requestADT req) {
   t_response res = {.msg = "\0"};
-  int fd = socket(AF_INET, SOCK_STREAM, 0);
-
-  if (connect(fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0)
-    return res;
 
   // Pide respuesta si se pudo enviar el request
-  if (send(fd, req, (sizeof(struct t_request)), 0) > 0)
-    recv(fd, &res, (sizeof(res)), 0);
-
-  close(fd);
+  if (send(con->fd, req, (sizeof(struct t_request)), 0) > 0)
+    recv(con->fd, &res, (sizeof(res)), 0);
 
   return res;
 }
@@ -66,8 +64,6 @@ t_addressADT create_address(char * hostname) {
 
   addr = malloc(sizeof(struct t_address));
 
-  strcpy(addr->hostname, hostname);
-
   sockaddr.sin_family = AF_INET;
   sockaddr.sin_port = htons(PORT);
   sockaddr.sin_addr = *((struct in_addr *) he->h_addr);
@@ -82,38 +78,63 @@ void free_address(t_addressADT addr) {
   free(addr);
 }
 
+t_connectionADT accept_peer(t_addressADT addr) {
+  struct sockaddr_in peer_sockaddr;
+  unsigned int peer_len = sizeof(peer_sockaddr);
+  int peer_sock;
+  t_connectionADT con;
+
+  if ((peer_sock = accept(addr->listen_fd, (struct sockaddr *) &peer_sockaddr, &peer_len)) < 0)
+    return NULL;
+
+  con = malloc(sizeof(struct t_connection));
+  con->fd = peer_sock;
+
+  return con;
+}
+
+t_connectionADT connect_peer(t_addressADT addr) {
+  t_connectionADT con = malloc(sizeof(struct t_connection));
+  con->fd = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (connect(con->fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0) {
+    free(con);
+    close(con->fd);
+    return NULL;
+  }
+
+  return con;
+}
+
+void disconnect(t_connectionADT con) {
+  free(con);
+}
+
 int listen_peer(t_addressADT addr) {
   addr->listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (bind(addr->listen_fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0 ||
                 listen(addr->listen_fd, MAX_CONNECTIONS) < 0) {
+    close(addr->listen_fd);
     return -1;
   }
 
   return 0;
 }
 
-void unlisten_peer(t_addressADT addr) {
-  close(addr->listen_fd);
+void unlisten_peer(t_connectionADT con) {
+  free(con);
 }
 
-t_requestADT read_request(t_addressADT addr) {
-  struct sockaddr_in peer_sockaddr;
-  unsigned int peer_len = sizeof(peer_sockaddr);
-  int peer_sock;
-  t_requestADT req;
+t_requestADT read_request(t_connectionADT con) {
+  t_requestADT req = malloc(sizeof(struct t_request));
 
-  if ((peer_sock = accept(addr->listen_fd, (struct sockaddr *) &peer_sockaddr, &peer_len)) < 0)
-    return NULL;
-
-  req = malloc(sizeof(struct t_request));
-  if (recv(peer_sock, req, sizeof(struct t_request), 0) < 1) {
+  if (recv(con->fd, req, sizeof(struct t_request), 0) < 1) {
     free(req);
     return NULL;
   }
 
-  req->res_fd = peer_sock;
-
+  req->res_fd = con->fd;
   return req;
 }
 
@@ -122,10 +143,9 @@ void get_request_msg(t_requestADT req, char *buffer) {
 }
 
 int send_response(t_requestADT req, t_response res) {
-  int n = send(req->res_fd, &res, sizeof(res), 0);
+  if (send(req->res_fd, &res, sizeof(res), 0) < 1)
+    return -1;
 
-  close(req->res_fd);
   free_request(req);
-
-  return n < 1 ? -1 : 0;
+  return 0;
 }

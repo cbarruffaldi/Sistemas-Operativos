@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[])
 {
-  
+
   if(argc != ARG_COUNT) {
     fprintf(stderr, "Usage: %s <server_path>", argv[0]);
 	return 1;
@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
   t_response res;
 
   t_requestADT req = create_request();
+  t_connectionADT con = connect_peer(sv_addr);
 
   printf("Client communicated to server\n");
   while (1) {
@@ -29,16 +30,17 @@ int main(int argc, char *argv[])
     buffer[strlen(buffer) - 1] = '\0';  // borra el '\n' final
 
     if (strcmp(buffer, LEAVE) == 0) { // se recibió LEAVE --> nos vamos
-      free_request(req); // TODO: raro el free_request
+      free_request(req);
       free_address(sv_addr);
+      disconnect(con);
       return 0;
     }
 
     set_request_msg(req, buffer);     // settea el input en el request
 
     printf("Sending request...\n");
-    res = send_request(sv_addr, req);    // envía request y recibe respuesta
-    
+    res = send_request(con, req);    // envía request y recibe respuesta
+
     if (res.msg[0] == '\0')
       fprintf(stderr, "Failed to send request\n");
     else

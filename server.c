@@ -10,7 +10,6 @@
 
 int main(int argc, char *argv[])
 {
-
   if(argc != ARG_COUNT) {
     fprintf(stderr, "Usage: %s <server_path>", argv[0]);
   return 1;
@@ -30,11 +29,19 @@ int main(int argc, char *argv[])
   }
 
   printf("Server listening\n");
+  printf("Awaiting accept...\n");
+
+  t_connectionADT con = accept_peer(sv_addr);
+
+  if (con == NULL)
+    printf("Accept failed.\n");
+  else
+    printf("Accepted!\n");
 
   while (1) {
     printf("Reading request...\n");
 
-    if ((req = read_request(sv_addr)) == NULL)  {
+    if ((req = read_request(con)) == NULL)  {
       fprintf(stderr, "error reading request\n");
       return 1;
     }
@@ -50,7 +57,7 @@ int main(int argc, char *argv[])
 
     if (strcmp(SHUTDOWN, msg) == 0) {
       printf("Shutting down...\n");
-      unlisten_peer(sv_addr);
+      unlisten_peer(con);
       free_address(sv_addr);
       return 0;
     }
