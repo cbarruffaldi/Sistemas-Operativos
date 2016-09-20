@@ -1,21 +1,20 @@
 #ifndef _IPC_H_
 #define _IPC_H_
 
-#define BUFSIZE 1024
+#define BUFSIZE 4096
 
 typedef struct {
   char msg[BUFSIZE];
 } t_response;
 
 // Representa un paquete a enviar.
-// Debe crearse con el t_address hacía el cual se responderá el request.
 typedef struct t_request * t_requestADT;
 
 // Representa la dirección de un peer.
 typedef struct t_address * t_addressADT;
 
 // Representa una conexión con un peer.
-// Dependiendo de si fue creada con listen() o connect(),
+// Dependiendo de si fue creada con accept() o connect(),
 // se puede leer o escribir respectivamente.
 typedef struct t_connection * t_connectionADT;
 

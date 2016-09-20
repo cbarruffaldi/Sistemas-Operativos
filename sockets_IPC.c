@@ -15,7 +15,9 @@
 #include <errno.h>
 
 #define MAX_CONNECTIONS 10
-#define PORT 5001
+#define DELIMITATOR ':'
+
+t_addressADT create_address_port(char * hostname, int port);
 
 struct t_address {
   int listen_fd; // solo se usa si pasó por un listen
@@ -54,18 +56,29 @@ void free_request(t_requestADT req) {
   free(req);
 }
 
-t_addressADT create_address(char * hostname) {
+/* Si bien nos parece mejor que las aplicaciones que usen
+** cre
+*/
+t_addressADT create_address(char * host) {
+  char * occurrence = strchr(host, DELIMITATOR);
+  if (occurrence == NULL)
+    return NULL;
+  *occurrence = '\0';
+  return create_address_port(host, atoi(occurrence+1));
+}
+
+t_addressADT create_address_port(char * hostname, int port) {
   struct hostent *he;
   struct sockaddr_in sockaddr;
   t_addressADT addr;
 
- if ((he = gethostbyname(hostname)) == NULL)
+ if ((he = gethostbyname(hostname)) == NULL || port < 1)
     return NULL;
 
   addr = malloc(sizeof(struct t_address));
 
   sockaddr.sin_family = AF_INET;
-  sockaddr.sin_port = htons(PORT);
+  sockaddr.sin_port = htons(port);
   sockaddr.sin_addr = *((struct in_addr *) he->h_addr);
   bzero(&(sockaddr.sin_zero), sizeof(sockaddr.sin_zero));
 
