@@ -122,8 +122,9 @@ int listen_peer(t_addressADT addr) {
   return 0;
 }
 
-void unlisten_peer(t_connectionADT con) {
-  free(con);
+// TODO: hacer bien, averiguar unbind()
+void unlisten_peer(t_addressADT addr) {
+  free(addr);
 }
 
 t_requestADT read_request(t_connectionADT con) {

@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+int attend(t_connectionADT con);
+
 int main(int argc, char *argv[])
 {
   if(argc != ARG_COUNT) {
@@ -15,13 +17,11 @@ int main(int argc, char *argv[])
   return 1;
   }
 
-  t_response res = {.msg = "HEY!"};
-  t_requestADT req;
-
-  char msg[BUFSIZE];
+  t_connectionADT con;
+  t_addressADT sv_addr;
 
   printf("Opening channel...\n");
-  t_addressADT sv_addr = create_address(argv[1]);
+  sv_addr = create_address(argv[1]);
 
   if (listen_peer(sv_addr) < 0) {
     fprintf(stderr, "Cannot listen\n");
@@ -29,37 +29,55 @@ int main(int argc, char *argv[])
   }
 
   printf("Server listening\n");
-  printf("Awaiting accept...\n");
 
-  t_connectionADT con = accept_peer(sv_addr);
-
-  if (con == NULL)
-    printf("Accept failed.\n");
-  else
-    printf("Accepted!\n");
-
+  
   while (1) {
-    printf("Reading request...\n");
+    printf("Awaiting accept...\n");
 
-    if ((req = read_request(con)) == NULL)  {
-      fprintf(stderr, "error reading request\n");
-      return 1;
-    }
+    con = accept_peer(sv_addr);
 
-    get_request_msg(req, msg);      // Copia el mensaje de req en msg
-    printf("Request read by server\n");
-    printf("msg: %s\n", msg);
-
-    if (send_response(req, res) < 0) {   // Responde a cliente
-      fprintf(stderr, "error sending response\n");
-      return 1;
-    }
-
-    if (strcmp(SHUTDOWN, msg) == 0) {
-      printf("Shutting down...\n");
-      unlisten_peer(con);
-      free_address(sv_addr);
+    if (con == NULL) {
+      printf("Accept failed.\n");
       return 0;
     }
+
+    printf("Accepted!\n");
+
+    if (fork() == 0)
+      return attend(con);
   }
+}
+
+int attend(t_connectionADT con) {
+    char msg[BUFSIZE];
+    int pid = getpid();
+    t_requestADT req;
+    t_response res = {.msg = "HEY!"};
+
+    while(1) {
+
+      printf("Reading request...\n");
+
+      if ((req = read_request(con)) == NULL)  {
+        fprintf(stderr, "error reading request\n");
+        return 1;
+      }
+
+      get_request_msg(req, msg);      // Copia el mensaje de req en msg
+      printf("Request read by server\n");
+      printf("erver pid: %d\nmsg: %s\n", pid, msg);
+
+      if (send_response(req, res) < 0) {   // Responde a cliente
+        fprintf(stderr, "error sending response\n");
+        return 1;
+      }
+
+      if (strcmp(SHUTDOWN, msg) == 0) {
+        printf("Shutting down...\n");
+        disconnect(con);
+        return 0;
+      }
+    }
+
+    return 1;
 }

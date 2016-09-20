@@ -57,7 +57,7 @@ int listen_peer(t_addressADT addr);
 t_connectionADT accept_peer(t_addressADT addr);
 
 // Cierra la conexión por la cual el peer leía requests.
-void unlisten_peer(t_connectionADT con);
+void unlisten_peer(t_addressADT con);
 
 // Lee request de una conexión.
 // Se bloquea hasta que se envíe alguno.

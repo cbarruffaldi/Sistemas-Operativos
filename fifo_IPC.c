@@ -20,7 +20,7 @@ struct t_address {
 
 struct t_connection {
   char path[BUFSIZE];
-}
+};
 
 struct t_request {
   char msg[BUFSIZE];
@@ -39,56 +39,55 @@ void free_address(t_addressADT addr) {
 
 //TODO: manejo de errores
 t_connectionADT accept_peer(t_addressADT addr) {
- char buffer[BUFSIZE];
- int pid, fd = open(addr->path, O_RDONLY);
+  char buffer[BUFSIZE];
+  int fd, n = 0;
+  t_connectionADT con;
 
- t_connectionADT con = malloc(sizeof(struct t_address));
- read(fd, buffer, BUFSIZE);
- close(fd);
+  fd = open(addr->path, O_RDWR); // solo leerá pero así siempre hay un write
+                                 // read no devolverá cero si se hace close del write.
 
- mkfifo(buffer, 0666);
- return con;
-}
+  if (fd < 0)
+    return NULL;
 
-void free_address(t_addressADT addr) {
-  free(addr);
-}
+  n = read(fd, buffer, BUFSIZE);
 
-//TODO: manejo de errores y decidir si hacer open y close todo el tiempo o solo una vez
-t_connectionADT accept_peer(t_addressADT addr) {
- char buffer[BUFSIZE];
- int pid, fd;
- t_connectionADT con;
+  if (n == 0)
+    printf("didnt read shit\n");
 
- fd = open(addr->path, O_RDONLY);
- read(fd, buffer, BUFSIZE);
- close(fd);
- mkfifo(buffer, 0666);
+  close(fd);
 
- con = malloc(sizeof(struct t_connection));
- con->fd = open(buffer, O_RDONLY);
- strcpy(con->addr.path, buffer);
 
- return con;
+  mkfifo(buffer, 0666);
+  con = malloc(sizeof(struct t_connection));
+  strcpy(con->path, buffer);
+
+  return con;
 }
 
 t_connectionADT connect_peer(t_addressADT addr) {
   char buffer[BUFSIZE];
   t_connectionADT con = malloc(sizeof(struct t_connection));
-  int fd = open(addr->path, O_WRONLY), pid = getpid();
+  int fd = open(addr->path, O_WRONLY), pid = getpid(), n;
 
   if (fd < 0)
     return NULL;
 
   sprintf(buffer, FIFO_LISTEN_PATH, pid);
-  write(fd, buffer, sizeof(buffer));
+  n = write(fd, buffer, sizeof(buffer));
   close(fd);
+
+  if (n < 0) {
+    printf("didnt write shit\n");
+    return NULL;
+  }
+
+  strcpy(con->path, buffer);
 
   return con;
 }
 
-void disconnect(t_addressADT con) { // void?
-  close(con->fd);
+void disconnect(t_connectionADT con) {
+  unlink(con->path);
   free(con);
 }
 
@@ -99,9 +98,8 @@ int listen_peer(t_addressADT addr) {
 }
 
 // Cierra el file descriptor de la conexión y borra el fifo asociado.
-void unlisten(t_addressADT con) {
-  unlink(con->addr.path);
-  disconnect(con);
+void unlisten_peer(t_addressADT addr) {
+  unlink(addr->path);
 }
 
 t_requestADT create_request() {
@@ -128,7 +126,7 @@ void set_request_msg(t_requestADT req, char *msg) {
 
 t_response send_request(t_connectionADT con, t_requestADT req) {
   int fd = open(con->path, O_WRONLY);
-  write(con->fd, req, sizeof(struct t_request));
+  write(fd, req, sizeof(struct t_request));
   close(fd);
   return read_response(req->res_addr.path);
 }

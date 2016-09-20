@@ -23,6 +23,11 @@ int main(int argc, char *argv[])
   t_requestADT req = create_request();
   t_connectionADT con = connect_peer(sv_addr);
 
+  if (con == NULL) {
+    printf("failed to connect\n");
+    return 1;
+  }
+  
   printf("Client communicated to server\n");
   while (1) {
     printf("> ");
