@@ -14,6 +14,8 @@
 
 static t_response read_response(char * fifo);
 
+//TODO: ver si hacer función genérica para manejar errores
+
 struct t_address {
   char path[BUFSIZE];
 };
@@ -37,7 +39,7 @@ void free_address(t_addressADT addr) {
   free(addr);
 }
 
-//TODO: manejo de errores
+// Recibe en buffer nombre de fifo a crear
 t_connectionADT accept_peer(t_addressADT addr) {
   char buffer[BUFSIZE];
   int fd, n = 0;
@@ -50,12 +52,10 @@ t_connectionADT accept_peer(t_addressADT addr) {
     return NULL;
 
   n = read(fd, buffer, BUFSIZE);
-
-  if (n == 0)
-    printf("didnt read shit\n");
-
   close(fd);
 
+  if (n < 1)
+    return NULL;
 
   mkfifo(buffer, 0666);
   con = malloc(sizeof(struct t_connection));
@@ -66,8 +66,8 @@ t_connectionADT accept_peer(t_addressADT addr) {
 
 t_connectionADT connect_peer(t_addressADT addr) {
   char buffer[BUFSIZE];
-  t_connectionADT con = malloc(sizeof(struct t_connection));
-  int fd = open(addr->path, O_WRONLY), pid = getpid(), n;
+  t_connectionADT con;
+  int n, fd = open(addr->path, O_WRONLY), pid = getpid();
 
   if (fd < 0)
     return NULL;
@@ -76,11 +76,10 @@ t_connectionADT connect_peer(t_addressADT addr) {
   n = write(fd, buffer, sizeof(buffer));
   close(fd);
 
-  if (n < 0) {
-    printf("didnt write shit\n");
+  if (n < 0)
     return NULL;
-  }
 
+  con = malloc(sizeof(struct t_connection));
   strcpy(con->path, buffer);
 
   return con;
@@ -114,7 +113,6 @@ t_requestADT create_request() {
   return req;
 }
 
-// Libera el request y borra el fifo asociado.
 void free_request(t_requestADT req) {
   unlink(req->res_addr.path);
   free(req);
@@ -125,27 +123,49 @@ void set_request_msg(t_requestADT req, char *msg) {
 }
 
 t_response send_request(t_connectionADT con, t_requestADT req) {
-  int fd = open(con->path, O_WRONLY);
-  write(fd, req, sizeof(struct t_request));
+  t_response res = {.msg = "\0"};
+  int n, fd = open(con->path, O_WRONLY);
+
+  if (fd < 0)
+    return res;
+
+  n = write(fd, req, sizeof(struct t_request));
   close(fd);
-  return read_response(req->res_addr.path);
+
+  if (n > 0)
+    res = read_response(req->res_addr.path);
+
+  return res;
 }
 
 // Devuelve la respuesta a un request.
 static t_response read_response(char * fifo) {
-  t_response res;
+  t_response res = {.msg = "\0"};
   int fd = open(fifo, O_RDONLY);
+
+  if (fd < 0)
+    return res;
+
   read(fd, &res, sizeof(t_response));
   close(fd);
   return res;
 }
 
-//TODO: manejo de errores
 t_requestADT read_request(t_connectionADT con) {
   t_requestADT req = malloc(sizeof(struct t_request));
-  int fd = open(con->path, O_RDONLY);
-  read(fd, req, sizeof(struct t_request));
+  int n, fd = open(con->path, O_RDONLY);
+
+  if (fd < 0)
+    return NULL;
+
+  n = read(fd, req, sizeof(struct t_request));
   close(fd);
+
+  if (n < 1) {
+    free(req);
+    return NULL;
+  }
+
   return req;
 }
 
@@ -154,11 +174,16 @@ void get_request_msg(t_requestADT req, char *buffer) {
 }
 
 int send_response(t_requestADT req, t_response res) {
-  int fd = open(req->res_addr.path, O_WRONLY);
+  int n, fd = open(req->res_addr.path, O_WRONLY);
   if (fd < 0)
     return -1;
-  write(fd, &res, sizeof(res));
+
+  n = write(fd, &res, sizeof(res));
   close(fd);
+
+  if (n < 1)
+    return -1;
+
   free(req);
   return 0;
 }
