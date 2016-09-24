@@ -23,5 +23,3 @@ PARA CORRER EN PAMPERO LOS SOCKETS
 
 Escribiendo "leave" se cierra el cliente.
 Escribiendo "shutdown" se apaga el server.
-Escribiendo "lock" no se leerá lo que los demás clientes escriban.
-Escribiendo "unlock" se anula lo de arriba.
