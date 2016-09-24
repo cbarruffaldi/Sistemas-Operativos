@@ -1,5 +1,3 @@
-Abrir y cerrar fifos luego de cada mensaje enviado o abrir una sola vez, enviar todo y luego cerrar?
+¿Cumple con la consigna usar threads que comparten un puntero a la base de datos (sqlite3 *) y manejar la concurrencia con semáforos?
 
-Vale abrir para RDWR o se debería hacer un nuevo open cada vez que no hay cliente con pipe hacia servidor abierto?
-
-Como crear fifo del servidor?
+Manejar el tema de límite de conexiones en sockets; emularlo en fifos a lo mejor
