@@ -134,7 +134,7 @@ void * attend(void * p) {
 int read_msg(t_connectionADT con, char msg[]) {
   t_requestADT req;
   t_response res = {.msg = "HEY!"};
-  
+
   printf("Reading request...\n");
 
   if ((req = read_request(con)) == NULL)  {
@@ -143,7 +143,7 @@ int read_msg(t_connectionADT con, char msg[]) {
   }
 
   get_request_msg(req, msg);      // Copia el mensaje de req en msg
-  
+
   if (send_response(req, res) < 0) {   // Responde a cliente
     fprintf(stderr, "error sending response\n");
     return -1;
