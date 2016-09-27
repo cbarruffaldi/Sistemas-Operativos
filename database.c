@@ -1,7 +1,18 @@
 #include <sqlite3.h>
 #include "IPC.h"
 
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+
 #define DATABASE_NAME "twitter.db"
+#define TABLE_TWITTER "twit"
+#define VALUE_SEPARATOR ':'
+#define ROW_SEPARATOR '\n'
+#define ARG_COUNT 2
 
 typedef struct {
   t_connectionADT con;
@@ -9,19 +20,37 @@ typedef struct {
   sqlite3* db;
 } pthread_data;
 
+typedef struct {
+  int n;
+  int rows;
+  char values[BUFSIZE]; // las columnas se separan por ':' y las filas por \n
+} query_rows;
+
 int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3* db);
 int callback (void *params, int argc, char *argv[], char *azColName[]);
 void * attend(void * p);
+int setup_db(sqlite3* db);
+void concat_value(query_rows * q, char *value);
 
 int main(int argc, char *argv[]) {
-  sqlite3* db;
+  sqlite3 *db;
   t_connectionADT con;
   t_addressADT db_addr;
   pthread_mutex_t *mutex;
   int rc;
 
+  if(argc != ARG_COUNT) {
+    fprintf(stderr, "Usage: %s <server_path>", argv[0]);
+  return 1;
+  }
+
   if (sqlite3_open(DATABASE_NAME, &db)) {
     printf("Could not open db\n%s", sqlite3_errmsg(db));
+    return 1;
+  }
+
+  if (setup_db(db) < 0) {
+    printf("Failed to setup database\n");
     return 1;
   }
 
@@ -56,32 +85,93 @@ int main(int argc, char *argv[]) {
   }
 }
 
-int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3* db) {
+int setup_db(sqlite3 *db) {
+  char *sql = "CREATE TABLE IF NOT EXISTS "TABLE_TWITTER" ( \
+               id INT PRIMARY KEY, writer VARCHAR(32), msg VARCHAR(150), likes INT);";
+  char *errmsg = NULL;
+  sqlite3_exec(db, sql, NULL, NULL, &errmsg);
+  if (errmsg != NULL) {
+    sqlite3_free(errmsg);
+    return -1;
+  }
+  return 0;
+}
+
+int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3 *db) {
   pthread_t thread;
   pthread_data * thdata = malloc(sizeof(*thdata));
   thdata->con = con;
   thdata->mutex = mutex;
+  thdata->db = db;
   return pthread_create(&thread, NULL, attend, thdata);
 }
 
 void * attend(void * p) {
   char sql[BUFSIZE];
-  char answer[BUFSIZE];
-  char *err_msg;
+  char *errmsg;
+  t_response resp;
   pthread_data *data = (pthread_data *) p;
   sqlite3* db = data->db;
   t_connectionADT con = data->con;
   pthread_mutex_t *lock = data->mutex;
   t_requestADT req;
 
+  query_rows param;
+
   free(p);
+  while (1) {
+    param.n = param.rows = 0;
 
-  req = read_request(con);
+    printf("Reading request\n");
+    req = read_request(con);
 
-  get_request_msg(req, sql);
-  sqlite3_exec(db, sql, callback, NULL, &err_msg); // guardar en buffer la respuesta
+    if (req == NULL) {
+      printf("Failed to read request\n");
+      pthread_exit(NULL);
+    }
 
+    get_request_msg(req, sql);
+
+    printf("Received %s\n", sql);
+
+    sqlite3_exec(db, sql, callback, &param, &errmsg);
+    if (errmsg != NULL)
+      printf("exec error: %s\n", errmsg);
+    param.values[param.n] = '\0';
+    if (param.n > 0) {
+      printf("Hay %d filas\n", param.rows);
+      printf("%s\n", param.values);
+    }
+    else {
+      param.values[0] = 'K';
+      param.values[1] = '\0';
+    }
+    strcpy(resp.msg, param.values);
+    printf("Sending response %s\n", resp.msg);
+    if (send_response(req, resp) < 0) {
+      printf("Failed to send response\n");
+      pthread_exit(NULL);
+    }
+  }
+
+  pthread_exit(NULL);
 }
 
-int callback (void *params, int argc, char *argv[], char *azColName[]) {
+int callback (void *p, int argc, char *argv[], char *azColName[]) {
+  query_rows *param = (query_rows *) p;
+  int i;
+  printf("Inside callback; row: %d\n", param->rows);
+  for (i = 0; i < argc; i++)
+    concat_value(param, argv[i]);
+  param->rows = param->rows+1;
+  param->values[param->n-1] = ROW_SEPARATOR;
+  return 0;
+}
+
+void concat_value(query_rows * q, char *value) {
+  int i, j;
+  for (i = 0, j = q->n; value[i] != '\0'; i++, j++)
+    q->values[j] = value[i];
+  q->values[j++] = VALUE_SEPARATOR;
+  q->n = j;
 }
