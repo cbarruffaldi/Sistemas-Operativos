@@ -45,7 +45,7 @@ int tweet_send(sessionADT se, char * msg) {
   req_bytes[0] = (char) OPCODE_TWEET;
   sprintf(req_bytes + 1, "%s%s%s", user, SEPARATOR, msg);
 
-  res=send_instruction(se,req_bytes);
+  res = send_info(se,req_bytes);
 
   //VER RESPUESTA DEL SERVIDOR
 
@@ -58,19 +58,20 @@ int like_send(sessionADT se, int tweet_id) {
   req_bytes[0] = (char) OPCODE_LIKE;
   sprintf(req_bytes + 1, "%d", tweet_id);
 
-  res = send_instruction(se, req_bytes);
+  res = send_info(se, req_bytes);
 
   // VER RESPUESTA DEL SERVIDOR
 }
 
-char* send_instruction(sessionADT se, char * instruction){
-  char * res = malloc(BUFSIZE);
-  t_response res;
+char * send_info(sessionADT se, char * instruction){
+  char * buff = malloc(BUFSIZE);  
+  t_responseADT response;
 
   set_request_msg(se->req,req_bytes);
-  res = send_request(se->con,se->req);
+  response = send_request(se->con,se->req);
+  get_response_msg(response, buff);
 
-  return res;
+  return buff
 }
 
 // char ** refresh_send(t_connectionADT con, int num) {
