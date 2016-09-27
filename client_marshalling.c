@@ -3,56 +3,74 @@
 #include "IPC.h"
 #include "marshalling.h"
 
-// TODO: podría también contener a request para no estar haciendo create_request y free todo el tiempo
 struct session {
   t_connectionADT con;
-}
+  t_requestADT req;
+  char[USER_SIZE] usr;
+};
 
 sessionADT start_session(char * a) {
+
   sessionADT se = malloc(sizeof(struct session))
   t_addressADT sv_addr = create_address(a);
-  se->con = connect_peer(sv_addr)
+
+  t_requestADT = create_request();
+  se->con = connect_peer(sv_addr);
+
+  if (con == NULL) {
+    printf("failed to connect\n");
+    return 1;
+  }
+
   return se;
 }
 
+void set_username(char* user){
+  se->usr = user;
+}
+
+//¿Desconectar o poner el user en null?
 void end_session(sessionADT se) {
   disconnect(se->con);
   free(se);
+
 }
 
-// TODO: ver nombres
+
 // Recibe como respuesta el id asignado al tweet enviado. Si hubo error devuelve -1.
-int tweet_send(sessionADT se, char * user, char * msg) {
-  char * req_bytes = malloc(BUFSIZE), * res;
+int tweet_send(sessionADT se, char * msg) {
+  char * req_bytes = malloc(BUFSIZE),
+  t_response res;
 
   req_bytes[0] = (char) OPCODE_TWEET;
   sprintf(req_bytes + 1, "%s%s%s", user, SEPARATOR, msg);
 
-  res = send_op(se, req_bytes);
-  return res[0];
+  res=send_instruction(se,req_bytes);
+
+  //VER RESPUESTA DEL SERVIDOR
+
 }
 
 int like_send(sessionADT se, int tweet_id) {
-  char * req_bytes = malloc(BUFSIZE), * res;
+  char * req_bytes = malloc(BUFSIZE),
+  char * res;
 
   req_bytes[0] = (char) OPCODE_LIKE;
   sprintf(req_bytes + 1, "%d", tweet_id);
 
-  res = send_op(se, req_bytes);
-  return res[0];
+  res = send_instruction(se, req_bytes);
+
+  // VER RESPUESTA DEL SERVIDOR
 }
 
-char * send_op(sessionADT se, char * op_bytes) {
-  char * res_bytes = malloc(BUFSIZE);
+char* send_instruction(sessionADT se, char * instruction){
+  char * res = malloc(BUFSIZE);
+  t_response res;
 
-  t_requestADT req = create_request();
-  req.set_request_msg(op_bytes);
+  set_request_msg(se->req,req_bytes);
+  res = send_request(se->con,se->req);
 
-  t_response res = send_request(se->con, req);
-  get_request_msg(res_bytes, res);
-
-  free_request(req)
-  return res_bytes;
+  return res;
 }
 
 // char ** refresh_send(t_connectionADT con, int num) {

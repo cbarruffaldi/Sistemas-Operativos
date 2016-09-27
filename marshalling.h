@@ -7,7 +7,17 @@
 #define OPCODE_LIKE 2
 #define OPCODE_REFRESH 3
 
+#define USER_SIZE 20
+#define TWEET_LENGHT 140 
+
 typedef struct session * sessionADT;
+
+struct tweet {
+	int id;
+	char[TWEET_LENGHT] msg;
+	char[USER_SIZE] usr;
+	int likes;
+};
 
 // solo de client?
 sessionADT start_session(char * a);
