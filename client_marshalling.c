@@ -1,79 +1,74 @@
-// client marshaling
-#include <stdio.h>
 #include "IPC.h"
-#include "marshalling.h"
+#include "client_marshalling.h"
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 struct session {
   t_connectionADT con;
   t_requestADT req;
-  char[USER_SIZE] usr;
 };
 
+char * send_op(sessionADT se, char * op_bytes); // static?
+int get_ans_int(char * arr);
+
 sessionADT start_session(char * a) {
-
-  sessionADT se = malloc(sizeof(struct session))
+  sessionADT se = malloc(sizeof(struct session));
+  se->req = create_request();
   t_addressADT sv_addr = create_address(a);
-
-  t_requestADT = create_request();
   se->con = connect_peer(sv_addr);
-
-  if (con == NULL) {
-    printf("failed to connect\n");
-    return 1;
-  }
-
   return se;
 }
 
-void set_username(char* user){
-  se->usr = user;
-}
-
-//¿Desconectar o poner el user en null?
 void end_session(sessionADT se) {
   disconnect(se->con);
+  free_request(se->req);
   free(se);
-
 }
 
-
-// Recibe como respuesta el id asignado al tweet enviado. Si hubo error devuelve -1.
-int tweet_send(sessionADT se, char * msg) {
-  char * req_bytes = malloc(BUFSIZE),
-  t_response res;
+int send_tweet(sessionADT se, char * user, char * msg) {
+  char * req_bytes = malloc(BUFSIZE), * res;
 
   req_bytes[0] = (char) OPCODE_TWEET;
   sprintf(req_bytes + 1, "%s%s%s", user, SEPARATOR, msg);
 
-  res = send_info(se,req_bytes);
+  res = send_op(se, req_bytes);
 
-  //VER RESPUESTA DEL SERVIDOR
-
+  return get_ans_int(res);
 }
 
-int like_send(sessionADT se, int tweet_id) {
-  char * req_bytes = malloc(BUFSIZE),
-  char * res;
+int send_like(sessionADT se, int tweet_id) {
+  char * req_bytes = malloc(BUFSIZE), * res;
 
   req_bytes[0] = (char) OPCODE_LIKE;
   sprintf(req_bytes + 1, "%d", tweet_id);
 
-  res = send_info(se, req_bytes);
+  res = send_op(se, req_bytes);
 
-  // VER RESPUESTA DEL SERVIDOR
+  return get_ans_int(res);
 }
 
-char * send_info(sessionADT se, char * instruction){
-  char * buff = malloc(BUFSIZE);  
-  t_responseADT response;
-
-  set_request_msg(se->req,req_bytes);
-  response = send_request(se->con,se->req);
-  get_response_msg(response, buff);
-
-  return buff
+int get_ans_int(char * arr) {
+  return arr[0]; // TODO: Ver como mandamos los ints en la respuesta. Un byte no alcanza.
 }
 
-// char ** refresh_send(t_connectionADT con, int num) {
+char * send_op(sessionADT se, char * op_bytes) {
+  char * res_bytes = malloc(BUFSIZE);
+
+  set_request_msg(se->req, op_bytes);
+
+  t_responseADT res = send_request(se->con, se->req);
+  get_request_msg(res, res_bytes);
+
+  return res_bytes;
+}
+
+// char ** send_refresh(sessionADT se, int tw_count) {
 //
 // }
