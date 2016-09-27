@@ -33,6 +33,27 @@ struct t_request {
   int res_fd;
 };
 
+struct t_response {
+  char msg[BUFSIZE];
+};
+
+t_responseADT create_response() {
+  return malloc(sizeof(struct t_response));
+}
+
+void free_response(t_responseADT res) {
+  free(res);
+}
+
+void set_response_msg(t_responseADT res, char *msg) {
+  strcpy(res->msg, msg);
+}
+
+void get_response_msg(t_responseADT res, char *buffer) {
+  strcpy(buffer, res->msg);
+  free(res);
+}
+
 t_requestADT create_request() {
   t_requestADT req = malloc(sizeof(struct t_request));
   return req;
@@ -42,12 +63,18 @@ void set_request_msg(t_requestADT req, char *msg) {
   strcpy(req->msg, msg);
 }
 
-t_response send_request(t_connectionADT con, t_requestADT req) {
-  t_response res = {.msg = "\0"};
+t_responseADT send_request(t_connectionADT con, t_requestADT req) {
+  int n = 0;
+  t_responseADT res = malloc(sizeof(struct t_response));
 
   // Pide respuesta si se pudo enviar el request
   if (send(con->fd, req, (sizeof(struct t_request)), 0) > 0)
-    recv(con->fd, &res, (sizeof(res)), 0);
+    n = recv(con->fd, res, (sizeof(struct t_response)), 0);
+
+  if (n < 1) {
+    free(res);
+    return NULL;
+  }
 
   return res;
 }
@@ -56,9 +83,6 @@ void free_request(t_requestADT req) {
   free(req);
 }
 
-/* Si bien nos parece mejor que las aplicaciones que usen
-** cre
-*/
 t_addressADT create_address(char * host) {
   char * occurrence = strchr(host, DELIMITATOR);
   if (occurrence == NULL)
@@ -156,8 +180,8 @@ void get_request_msg(t_requestADT req, char *buffer) {
   strcpy(buffer, req->msg);
 }
 
-int send_response(t_requestADT req, t_response res) {
-  if (send(req->res_fd, &res, sizeof(res), 0) < 1)
+int send_response(t_requestADT req, t_responseADT res) {
+  if (send(req->res_fd, res, sizeof(struct t_response), 0) < 1)
     return -1;
 
   free_request(req);

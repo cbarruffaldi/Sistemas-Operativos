@@ -12,7 +12,9 @@
 #define FIFO_RESPONSE_PATH "/tmp/fifo_response_%d"  // Se le concatena el peer PID. Se asegura unicidad.
 #define FIFO_LISTEN_PATH "/tmp/fifo_listen_%d"
 
-static t_response read_response(char * fifo);
+static t_responseADT read_response(char * fifo);
+static int write_to_fifo(char * fifo, void * content, int size);
+static void * read_from_fifo(char * fifo, int size);
 
 //TODO: ver si hacer función genérica para manejar errores
 
@@ -28,6 +30,11 @@ struct t_request {
   char msg[BUFSIZE];
   struct t_address res_addr;
 };
+
+struct t_response{
+  char msg[BUFSIZE];
+};
+
 
 t_addressADT create_address(char * path) {
   t_addressADT addr = malloc(sizeof(struct t_address));
@@ -101,6 +108,14 @@ void unlisten_peer(t_addressADT addr) {
   unlink(addr->path);
 }
 
+void free_response(t_responseADT res) {
+  free(res);
+}
+
+t_responseADT create_response() {
+  return malloc(sizeof(struct t_response));
+}
+
 t_requestADT create_request() {
   struct t_address res_addr;
   t_requestADT req = malloc(sizeof(struct t_request));
@@ -122,12 +137,21 @@ void set_request_msg(t_requestADT req, char *msg) {
   strcpy(req->msg, msg);
 }
 
-t_response send_request(t_connectionADT con, t_requestADT req) {
-  t_response res = {.msg = "\0"};
+void set_response_msg(t_responseADT res, char *msg) {
+  strcpy(res->msg, msg);
+}
+
+void get_response_msg(t_responseADT res, char *buffer) {
+  strcpy(buffer, res->msg);
+  free(res);
+}
+
+t_responseADT send_request(t_connectionADT con, t_requestADT req) {
   int n, fd = open(con->path, O_WRONLY);
+  t_responseADT res = NULL;
 
   if (fd < 0)
-    return res;
+    return NULL;
 
   n = write(fd, req, sizeof(struct t_request));
   close(fd);
@@ -139,51 +163,59 @@ t_response send_request(t_connectionADT con, t_requestADT req) {
 }
 
 // Devuelve la respuesta a un request.
-static t_response read_response(char * fifo) {
-  t_response res = {.msg = "\0"};
-  int fd = open(fifo, O_RDONLY);
-
-  if (fd < 0)
-    return res;
-
-  read(fd, &res, sizeof(t_response));
-  close(fd);
-  return res;
+static t_responseADT read_response(char * fifo) {
+  return read_from_fifo(fifo, sizeof(struct t_response));
 }
 
 t_requestADT read_request(t_connectionADT con) {
-  t_requestADT req = malloc(sizeof(struct t_request));
-  int n, fd = open(con->path, O_RDONLY);
+  return read_from_fifo(con->path, sizeof(struct t_request));
+}
+
+// Lee algo de tamaño size de fifo
+static void * read_from_fifo(char * fifo, int size) {
+  int n, fd = open(fifo, O_RDONLY);
+  void * res;
 
   if (fd < 0)
     return NULL;
 
-  n = read(fd, req, sizeof(struct t_request));
+  res = malloc(size);
+
+  n = read(fd, res, size);
   close(fd);
 
   if (n < 1) {
-    free(req);
+    free(res);
     return NULL;
   }
 
-  return req;
+  return res;
+}
+
+// Escribe algo de tamaño size al fifo
+static int write_to_fifo(char * fifo, void * content, int size) {
+  int n, fd = open(fifo, O_WRONLY);
+
+  if (fd < 0)
+    return -1;
+
+  n = write(fd, content, size);
+  close(fd);
+
+  if (n < 1)
+    return -1;
+
+  return 0;
 }
 
 void get_request_msg(t_requestADT req, char *buffer) {
   strcpy(buffer, req->msg);
 }
 
-int send_response(t_requestADT req, t_response res) {
-  int n, fd = open(req->res_addr.path, O_WRONLY);
-  if (fd < 0)
-    return -1;
+int send_response(t_requestADT req, t_responseADT res) {
+  int rc = write_to_fifo(req->res_addr.path, res, sizeof(struct t_response));
+  if (rc == 0)
+    free(req);
 
-  n = write(fd, &res, sizeof(res));
-  close(fd);
-
-  if (n < 1)
-    return -1;
-
-  free(req);
-  return 0;
+  return rc;
 }

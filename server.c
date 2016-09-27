@@ -131,8 +131,9 @@ void * attend(void * p) {
 }
 
 int read_msg(t_connectionADT con, char msg[]) {
+  int rc;
   t_requestADT req;
-  t_response res = {.msg = "HEY!"};
+  t_responseADT res = create_response();
 
   printf("Reading request...\n");
 
@@ -141,9 +142,13 @@ int read_msg(t_connectionADT con, char msg[]) {
     return -1;
   }
 
+  set_response_msg(res, "HEY");
   get_request_msg(req, msg);      // Copia el mensaje de req en msg
 
-  if (send_response(req, res) < 0) {   // Responde a cliente
+  rc = send_response(req, res);
+  free_response(res);
+  
+  if (rc < 0) {   // Responde a cliente
     fprintf(stderr, "error sending response\n");
     return -1;
   }

@@ -109,12 +109,12 @@ int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3 *db) {
 void * attend(void * p) {
   char sql[BUFSIZE];
   char *errmsg;
-  t_response resp;
+  t_requestADT req;
   pthread_data *data = (pthread_data *) p;
   sqlite3* db = data->db;
   t_connectionADT con = data->con;
   pthread_mutex_t *lock = data->mutex;
-  t_requestADT req;
+  t_responseADT res = create_response();
 
   query_rows param;
 
@@ -137,7 +137,9 @@ void * attend(void * p) {
     sqlite3_exec(db, sql, callback, &param, &errmsg);
     if (errmsg != NULL)
       printf("exec error: %s\n", errmsg);
+
     param.values[param.n] = '\0';
+
     if (param.n > 0) {
       printf("Hay %d filas\n", param.rows);
       printf("%s\n", param.values);
@@ -146,9 +148,11 @@ void * attend(void * p) {
       param.values[0] = 'K';
       param.values[1] = '\0';
     }
-    strcpy(resp.msg, param.values);
-    printf("Sending response %s\n", resp.msg);
-    if (send_response(req, resp) < 0) {
+
+    set_response_msg(res, param.values);
+    printf("Sending response %s\n", param.values);
+
+    if (send_response(req, res) < 0) {
       printf("Failed to send response\n");
       pthread_exit(NULL);
     }
@@ -160,11 +164,12 @@ void * attend(void * p) {
 int callback (void *p, int argc, char *argv[], char *azColName[]) {
   query_rows *param = (query_rows *) p;
   int i;
-  printf("Inside callback; row: %d\n", param->rows);
+
   for (i = 0; i < argc; i++)
     concat_value(param, argv[i]);
   param->rows = param->rows+1;
   param->values[param->n-1] = ROW_SEPARATOR;
+  
   return 0;
 }
 
