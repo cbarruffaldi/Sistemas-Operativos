@@ -9,25 +9,27 @@
 
 int main(int argc, char *argv[])
 {
+  t_responseADT res;
+  t_connectionADT con;
+  t_addressADT sv_addr;
+  t_requestADT req;
+  char answer[BUFSIZE];
+  char buffer[BUFSIZE];
 
   if(argc != ARG_COUNT) {
     fprintf(stderr, "Usage: %s <server_path>", argv[0]);
 	return 1;
   }
 
-  t_addressADT sv_addr = create_address(argv[1]);
-
-  char buffer[BUFSIZE] = "\0"; // Buffer de input de stdin
-  t_response res;
-
-  t_requestADT req = create_request();
-  t_connectionADT con = connect_peer(sv_addr);
+  sv_addr = create_address(argv[1]);
+  req = create_request();
+  con = connect_peer(sv_addr);
 
   if (con == NULL) {
     printf("failed to connect\n");
     return 1;
   }
-  
+
   printf("Client communicated to server\n");
   while (1) {
     printf("> ");
@@ -46,10 +48,12 @@ int main(int argc, char *argv[])
     printf("Sending request...\n");
     res = send_request(con, req);    // envía request y recibe respuesta
 
-    if (res.msg[0] == '\0')
+    if (res == NULL)
       fprintf(stderr, "Failed to send request\n");
-    else
-      printf("Request sent by client and received response:\n%s\n", res.msg);
+    else {
+      get_response_msg(res, answer);
+      printf("Request sent by client and received response:\n%s\n", answer);
+    }
   }
 
   return 1;
