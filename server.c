@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
   pthread_mutex_t *lock;
   int rc, id = 0;
 
-  /* inizializa mutex en espacio donde todos los threads lo pueden compartir: heap */
+  /* inicializa mutex en espacio donde todos los threads lo pueden compartir: heap */
   lock = malloc(sizeof(*lock));
   pthread_mutex_init(lock, NULL);
 

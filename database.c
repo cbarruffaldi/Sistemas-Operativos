@@ -1,19 +1,29 @@
 #include <sqlite3.h>
 #include "IPC.h"
 
+#define DATABASE_NAME "twitter.db"
+
 typedef struct {
   t_connectionADT con;
   pthread_mutex_t *mutex;
+  sqlite3* db;
 } pthread_data;
 
-int create_thread(t_connectionADT con, pthread_mutex_t *mutex);
+int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3* db);
+int callback (void *params, int argc, char *argv[], char *azColName[]);
 void * attend(void * p);
 
 int main(int argc, char *argv[]) {
+  sqlite3* db;
   t_connectionADT con;
   t_addressADT db_addr;
   pthread_mutex_t *mutex;
   int rc;
+
+  if (sqlite3_open(DATABASE_NAME, &db)) {
+    printf("Could not open db\n%s", sqlite3_errmsg(db));
+    return 1;
+  }
 
   mutex = malloc(sizeof(*mutex));
   pthread_mutex_init(mutex, NULL);
@@ -37,7 +47,7 @@ int main(int argc, char *argv[]) {
 
     printf("Accepted!\n");
 
-    rc = create_thread(con, mutex);
+    rc = create_thread(con, mutex, db);
 
     if (rc) {
       printf("Failed to create thread\n");
@@ -46,7 +56,7 @@ int main(int argc, char *argv[]) {
   }
 }
 
-int create_thread(t_connectionADT con, pthread_mutex_t *mutex) {
+int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3* db) {
   pthread_t thread;
   pthread_data * thdata = malloc(sizeof(*thdata));
   thdata->con = con;
@@ -55,12 +65,23 @@ int create_thread(t_connectionADT con, pthread_mutex_t *mutex) {
 }
 
 void * attend(void * p) {
-  char msg[BUFSIZE];
+  char sql[BUFSIZE];
+  char answer[BUFSIZE];
+  char *err_msg;
   pthread_data *data = (pthread_data *) p;
+  sqlite3* db = data->db;
   t_connectionADT con = data->con;
   pthread_mutex_t *lock = data->mutex;
+  t_requestADT req;
 
   free(p);
-  
 
+  req = read_request(con);
+
+  get_request_msg(req, sql);
+  sqlite3_exec(db, sql, callback, NULL, &err_msg); // guardar en buffer la respuesta
+
+}
+
+int callback (void *params, int argc, char *argv[], char *azColName[]) {
 }
