@@ -6,13 +6,17 @@
 #include "client_marshalling.h"
 #include "client.h"
 #include "client_commands.h"
+#include "marshalling.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 
 /* Cantidad de comandos */
 #define CMDS_SIZE (sizeof(commands)/sizeof(commands[0]))
 
+#define COLUMNS 60
 
 /* Estructura que representa un comando */
 typedef struct {
@@ -25,19 +29,24 @@ typedef struct {
 
 static int help(const char *args, sessionADT se, t_user *uinfo);
 static int login(const char *args, sessionADT se, t_user *uinfo);
-static int twit(const char *args, sessionADT se, t_user *uinfo);
+static int tweet(const char *args, sessionADT se, t_user *uinfo);
 static int like(const char *args, sessionADT se, t_user *uinfo);
 static int refresh(const char *args, sessionADT se, t_user *uinfo);
 static int logout(const char *args, sessionADT se, t_user *uinfo);
 static int valid_like(const char *args);
+static char * fill(char c, int length);
+static void print_user(char * usr);
+static void print_msg(char * msg);
+static void print_line();
+static void print_tweet(t_tweet tw);
 
 static void show_cmd_help(command cmd);
 
 static command commands[]= {{"help", help, "", "Displays commands and descriptions"},
               {"login", login, "[username]", "Logs user with username."},
-              {"twit", twit, "[msg]", "Twits a twit."},
-              {"like", like, "[twit_id]", "Likes a twit."},
-              {"refresh", refresh, "", "Prints most recent twits."},
+              {"tweet", tweet, "[msg]", "Tweets a tweet."},
+              {"like", like, "[tweet_id]", "Likes a tweet."},
+              {"refresh", refresh, "", "Prints most recent tweets."},
               {"logout", logout, "", "Logs out."},
               };
 
@@ -85,21 +94,21 @@ static int login(const char *args, sessionADT se, t_user *uinfo) {
   return INVALID_ARGS;
 }
 
-static int twit(const char *args, sessionADT se, t_user *uinfo) {
+static int tweet(const char *args, sessionADT se, t_user *uinfo) {
   if (!logged(uinfo))
     return NOT_LOGGED;
 
   int len = strlen(args);
   if (len <= MSG_SIZE && len > 0) {
-    printf("Received valid twit: %s\n", args);
- //   send_tweet(se, uinfo->username, args);
+    printf("Received valid tweet: %s\n", args);
+	  send_tweet(se, uinfo->username, args); // retorna el ultimo id que tiene la bd
     return VALID;
   }
   else if (len == 0) {
-    printf("Can't twit an empty twit!\n");
+    printf("Can't tweet an empty tweet!\n");
   }
   else {
-    printf("Twit too long.\n");
+    printf("Tweet too long.\n");
   }
 
   return INVALID_ARGS;
@@ -112,23 +121,30 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
     return NOT_LOGGED;
 
   if (args[0] == '\0') {
-    printf("Need twit id in order to like it\n");
+    printf("Need tweet id in order to like it\n");
     return INVALID_ARGS;
   }
   if (!valid_like(args)) {
-    printf("Invalid twit id\n");
+    printf("Invalid tweet id\n");
     return INVALID_ARGS;
   }
 
   id = atoi(args);
   printf("Received valid like %d\n", id);
+
+	send_like(se, id);  // Devuelve el número de likes del tweet pero no se usa.
+
   return VALID;
 }
 
 static int refresh(const char *args, sessionADT se, t_user *uinfo) {
   if (!logged(uinfo))
     return NOT_LOGGED;
+	int count;
+	t_tweet * tws = send_refresh(se, 10, &count); // TODO: cantidad de tws a refreshear
+
   printf("Received refresh %s\n", args);
+	return 0;
 }
 
 static int logout(const char *args, sessionADT se, t_user *uinfo) {
@@ -148,4 +164,40 @@ static int valid_like(const char *args) {
     if (!isdigit(args[i]))
       return 0;
   return 1;
+}
+
+static void print_tweet(t_tweet tw) {
+  print_user(tw.user);
+  print_msg(tw.msg);
+  printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, fill(' ', COLUMNS - 27));
+  print_line();
+}
+
+static void print_tweets(t_tweet * tws, int count) {
+  print_line();
+  for (size_t i = 0; i < count; i++) {
+    print_tweet(tws[i]);
+  }
+}
+
+static void print_line() {
+  printf(" %s\n", fill('-', COLUMNS - 2));
+}
+
+static void print_user(char * usr) {
+  printf("| %s:%s|\n", usr, fill(' ', COLUMNS - strlen(usr) - 4));
+}
+
+static void print_msg(char * msg) {
+  printf("| %s%s|\n", msg, fill(' ', COLUMNS - strlen(msg) - 3));
+}
+
+static char * fill(char c, int length) {
+  char * arr = malloc(length + 1);
+  int i = 0;
+  for (;i < length; i++) {
+    arr[i] = c;
+  }
+  arr[i] = '\0';
+  return arr;
 }

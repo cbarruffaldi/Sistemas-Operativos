@@ -2,6 +2,7 @@
 #include "client_marshalling.h"
 #include "client_commands.h"
 #include "client.h"
+#include "marshalling.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +17,7 @@
 #define NOT_LOGGED_MSG "Must be logged in order to execute command.\nUse login [username]"
 #define ALREADY_LOGGED_MSG "Can't login if already logged"
 
-/* 
+/*
 ** Estructura análoga al shell del tp de Arqui:
 ** https://github.com/cbarruffaldi/TPE-Arqui/blob/master/nanOS/Userland/SampleCodeModule/shell.c
 */
@@ -72,9 +73,9 @@ int main(int argc, char *argv[]) {
 }
 
 /*
-** Borra los espacios iniciales y finales de la cadena ingresada por entrada estándar 
+** Borra los espacios iniciales y finales de la cadena ingresada por entrada estándar
 ** como también los espacios repetidos.
-** Se extrajo del TP de Arqui: 
+** Se extrajo del TP de Arqui:
 ** https://github.com/cbarruffaldi/TPE-Arqui/blob/master/nanOS/Userland/SampleCodeModule/stdio.c
 */
 static int readline_no_spaces(char *str, unsigned int maxlen) {
@@ -98,9 +99,9 @@ static int readline_no_spaces(char *str, unsigned int maxlen) {
   return i;
 }
 
-/* 
-** Retorna la longitud del comando ingresado y guarda su contenido en un arreglo recibido como parámetro 
-** Se extrajo del TP de Arqui: 
+/*
+** Retorna la longitud del comando ingresado y guarda su contenido en un arreglo recibido como parámetro
+** Se extrajo del TP de Arqui:
 ** https://github.com/cbarruffaldi/TPE-Arqui/blob/master/nanOS/Userland/SampleCodeModule/shell.c
 */
 static int extract_cmd_name(char * cmd_name, const char * str) {

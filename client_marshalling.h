@@ -1,23 +1,9 @@
-#ifndef _MARSHALLING_
-#define _MARSHALLING_
+#ifndef _CLIENT_MARSHALLING_
+#define _CLIENT_MARSHALLING_
 
-#define SEPARATOR ":|:"
-
-#define OPCODE_TWEET 1
-#define OPCODE_LIKE 2
-#define OPCODE_REFRESH 3
-
-#define USER_SIZE 32
-#define MSG_SIZE 140
+#include "marshalling.h"
 
 typedef struct session * sessionADT;
-
-typedef struct {
-  char user[USER_SIZE];
-  char msg[MSG_SIZE];
-  unsigned int likes;
-  unsigned int id;
-} t_tweet;
 
 sessionADT start_session(char * a);
 
