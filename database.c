@@ -1,5 +1,5 @@
-#include "IPC.h"
-#include "database.h"
+#include "include/IPC.h"
+#include "include/database.h"
 
 #include <stdlib.h>
 #include <pthread.h>

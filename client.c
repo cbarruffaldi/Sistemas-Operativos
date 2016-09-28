@@ -1,8 +1,8 @@
-#include "IPC.h"
-#include "client_marshalling.h"
-#include "client_commands.h"
-#include "client.h"
-#include "marshalling.h"
+#include "include/IPC.h"
+#include "include/client_marshalling.h"
+#include "include/client_commands.h"
+#include "include/client.h"
+#include "include/marshalling.h"
 
 #include <stdio.h>
 #include <string.h>

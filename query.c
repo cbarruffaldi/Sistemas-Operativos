@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "query.h"
+#include "include/query.h"
 
 #define Q_REFRESH "SELECT * FROM "TABLE_TWIT" \
                       WHERE "ATR_TWIT_ID" > %d;"

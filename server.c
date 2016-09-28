@@ -1,9 +1,10 @@
+#include "include/server_marshalling.h"
+#include "include/IPC.h"
+
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
-#include "server_marshalling.h"
-#include "IPC.h"
 
 #define DATABASE_PROCESS "database.bin"
 
@@ -19,7 +20,7 @@ int main(int argc, char *argv[])
   //sprintf(str,"%s %s",argv[1], argv[2]);
   pid = fork();
 
-  if (pid == 0) { 
+  if (pid == 0) {
 
       //char *args [] ={argv[2], argv[1]};
       execl(DATABASE_PROCESS, DATABASE_PROCESS, argv[2], NULL);
@@ -29,6 +30,5 @@ int main(int argc, char *argv[])
 //  addresses = init(argv[1],argv[2]);
 
 //  start_connection(addresses);
-  
-}
 
+}

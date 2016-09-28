@@ -3,10 +3,10 @@
 ** https://github.com/cbarruffaldi/TPE-Arqui/blob/master/nanOS/Userland/SampleCodeModule/commands.c
 */
 
-#include "client_marshalling.h"
-#include "client.h"
-#include "client_commands.h"
-#include "marshalling.h"
+#include "include/client_marshalling.h"
+#include "include/client.h"
+#include "include/client_commands.h"
+#include "include/marshalling.h"
 
 #include <stdio.h>
 #include <stdlib.h>

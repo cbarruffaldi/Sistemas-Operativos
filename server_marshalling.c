@@ -1,6 +1,7 @@
 //server_marshalling.c
-#include "server_marshalling.h"
-#include "IPC.h"
+#include "include/server_marshalling.h"
+#include "include/IPC.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
