@@ -83,6 +83,11 @@ void free_request(t_requestADT req) {
   free(req);
 }
 
+void unaccept(t_connectionADT con) {
+  close(con->fd);
+  free(con);
+}
+
 t_addressADT create_address(char * host) {
   char * occurrence = strchr(host, DELIMITATOR);
   if (occurrence == NULL)

@@ -92,7 +92,6 @@ int main(int argc, char *argv[]) {
   }
 }
 
-//TODO: mover query a una constante
 int setup_db(sqlite3 *db) {
   char *sql = TABLE_CREATE;
   char *errmsg = NULL;
@@ -127,6 +126,7 @@ void * attend(void * p) {
   pthread_mutex_t *mutex = data->mutex;
 
   free(p);
+
   while (1) {
     param.n = param.rows = 0;
 
@@ -142,17 +142,19 @@ void * attend(void * p) {
 
     printf("Received %s\n", sql);
 
+    /* Comienzo de zona crítica */
     pthread_mutex_lock(mutex);
     sqlite3_exec(db, sql, callback, &param, &errmsg);
     pthread_mutex_unlock(mutex);
+    /* Fin zona crítica */
 
     if (errmsg != NULL)
       printf("exec error: %s\n", errmsg);
 
-    param.values[param.n] = '\0';
+    param.values[param.n-1] = '\0';
 
     if (param.n > 0) {
-      printf("Hay %d filas\n", param.rows);
+      printf("Hay %d fila%c\n", param.rows, param.rows == 1 ? '\0' : 's');
       printf("%s\n", param.values);
     }
 

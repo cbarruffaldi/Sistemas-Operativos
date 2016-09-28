@@ -90,7 +90,7 @@ void * attend(void * p) {
 	t_connectionADT con = data->con;
   pthread_mutex_t *lock = data->lock;
 
-	// ya se copiaron los datos en id y en con; se libera data
+	// Ya se copiaron los datos en id y en con; se libera data
   // Otra variante es no usar las variables locales y manejarse con data
 	free(data);
 
@@ -101,30 +101,12 @@ void * attend(void * p) {
 
     if (strcmp(SHUTDOWN, msg) == 0) {
       printf("Shutting down...\n");
-      disconnect(con);
+      unaccept(con);
       pthread_exit(NULL);
     }
 
-    printf("Attempting to lock\n");
-    pthread_mutex_lock(lock);
-    printf("Locked\n");
-
     printf("[%d] Msg:%s\n", id, msg);
 
-    if (strcmp(msg, LOCK) != 0) {
-      pthread_mutex_unlock(lock);
-      printf("Unlocked\n");
-    }
-    else {
-
-      while (strcmp(msg, UNLOCK) != 0) {
-        read_msg(con, msg);
-        printf("[%d] Locked msg: %s\n", id, msg);
-      }
-
-      pthread_mutex_unlock(lock);
-      printf("Unlocked\n");
-    }
   }
 
   pthread_exit(NULL);

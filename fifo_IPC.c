@@ -15,6 +15,7 @@
 static t_responseADT read_response(char * fifo);
 static int write_to_fifo(char * fifo, void * content, int size);
 static void * read_from_fifo(char * fifo, int size);
+static void send_disconnect_signal(t_connectionADT con);
 
 //TODO: ver si hacer función genérica para manejar errores
 
@@ -34,7 +35,6 @@ struct t_request {
 struct t_response{
   char msg[BUFSIZE];
 };
-
 
 t_addressADT create_address(char * path) {
   t_addressADT addr = malloc(sizeof(struct t_address));
@@ -92,9 +92,19 @@ t_connectionADT connect_peer(t_addressADT addr) {
   return con;
 }
 
+void unaccept(t_connectionADT con) {
+  free(con);
+}
+
 void disconnect(t_connectionADT con) {
+  send_disconnect_signal(con);
   unlink(con->path);
   free(con);
+}
+
+static void send_disconnect_signal(t_connectionADT con) {
+  int fd = open(con->path, O_WRONLY);
+  close(fd);
 }
 
 int listen_peer(t_addressADT addr) {

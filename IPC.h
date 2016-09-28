@@ -56,7 +56,7 @@ void free_address(t_addressADT addr);
 // través de esta conexión.
 t_connectionADT connect_peer(t_addressADT addr);
 
-// Cierra la conexión.
+// Cierra una conexión adquirida por connect.
 void disconnect(t_connectionADT con);
 
 // Abre un nuevo canal por el cual el peer leerá requests que sean enviados
@@ -66,6 +66,9 @@ int listen_peer(t_addressADT addr);
 // Devuelve una connection cuando un peer hace connect a un address
 // que previamente pasó por la función listen_peer.
 t_connectionADT accept_peer(t_addressADT addr);
+
+// Cierra una conexión adquirida mediante un accept.
+void unaccept(t_connectionADT con);
 
 // Cierra la conexión por la cual el peer leía requests.
 void unlisten_peer(t_addressADT con);
