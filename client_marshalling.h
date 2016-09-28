@@ -2,6 +2,7 @@
 #define _MARSHALLING_
 
 #define SEPARATOR ":|:"
+#define SEP_START ":" // TODO: hacer con una funcion
 
 #define OPCODE_TWEET 1
 #define OPCODE_LIKE 2
@@ -12,6 +13,13 @@
 
 typedef struct session * sessionADT;
 
+typedef struct {
+  char user[USER_SIZE];
+  char msg[MSG_SIZE];
+  unsigned int likes;
+  unsigned int id;
+} t_tweet;
+
 sessionADT start_session(char * a);
 
 void end_session(sessionADT se);
@@ -19,5 +27,7 @@ void end_session(sessionADT se);
 int send_tweet(sessionADT se, char * user, char * msg);
 
 int send_like(sessionADT se, int tweet_id);
+
+t_tweet * send_refresh(int tw_count);
 
 #endif
