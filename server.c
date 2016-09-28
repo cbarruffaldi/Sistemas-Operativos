@@ -1,9 +1,11 @@
+#include "include/server_marshalling.h"
+#include "include/IPC.h"
+
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "server_marshalling.h"
-#include "IPC.h"
 
+#define ARG_COUNT 3
 #define DATABASE_PROCESS "database.bin"
 
 typedef struct {
@@ -19,7 +21,7 @@ int main(int argc, char *argv[])
   t_master_sessionADT master_session;
   t_sessionADT session;
 
-  if (argc != 3) {
+  if (argc != ARG_COUNT) {
     printf("Usage: %s <server_path> <database_path>\n", argv[0]);
     return 1;
   }
@@ -36,7 +38,6 @@ int main(int argc, char *argv[])
     create_thread(argv[2], session);
   }
 }
-
 
 int create_thread(char * db_path, t_sessionADT session) {
   pthread_t thread;

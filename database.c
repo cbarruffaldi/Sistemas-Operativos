@@ -1,5 +1,5 @@
-#include "IPC.h"
-#include "database.h"
+#include "include/IPC.h"
+#include "include/database.h"
 
 #include <stdlib.h>
 #include <pthread.h>
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 }
 
 int setup_db(sqlite3 *db) {
-  char sql[BUFSIZE]; 
+  char sql[BUFSIZE];
   sprintf(sql, TABLE_CREATE, USER_SIZE, MSG_SIZE);
   char *errmsg = NULL;
   sqlite3_exec(db, sql, NULL, NULL, &errmsg);
@@ -119,7 +119,7 @@ void * attend(void * p) {
   t_requestADT req;
   query_rows param;
 
-  t_responseADT res = create_response(); 
+  t_responseADT res = create_response();
 
   pthread_data *data = (pthread_data *) p;
   sqlite3* db = data->db;
@@ -181,7 +181,7 @@ int callback (void *p, int argc, char *argv[], char *NotUsed[]) {
     concat_value(param, argv[i]);
   param->rows = param->rows+1;
   param->values[param->n-1] = ROW_SEPARATOR;
-  
+
   return 0;
 }
 
