@@ -16,9 +16,8 @@ struct session {
 };
 
 char * send_op(sessionADT se, char * op_bytes); // static?
-int atoi(char * arr);
-char * next_value(char * a);
-char * n_next_value(char * a, int steps);
+
+t_tweet * process_tweets(char * res, int * count);
 
 sessionADT start_session(char * a) {
   sessionADT se = malloc(sizeof(struct session));
@@ -56,39 +55,36 @@ int send_like(sessionADT se, int tweet_id) {
   return atoi(res);
 }
 
-t_tweet * send_refresh(int tw_count) {
+t_tweet * send_refresh(sessionADT se, int ref_count, int * received_count) {
   char * req_bytes = malloc(BUFSIZE), * res;
 
   req_bytes[0] = (char) OPCODE_REFRESH;
+  sprintf(req_bytes + 1, "%d", ref_count);
 
   res = send_op(se, req_bytes);
 
-  return process_tweets(res);
+  return process_tweets(res, received_count);
 }
 
-t_tweet * process_tweets(char * res) {
+t_tweet * process_tweets(char * res, int * count) {
   t_tweet * tweets = malloc(BUFSIZE);
-  t_tweet aux;
   char str[BUFSIZE];
-  memcpy(str, res, BUFSIZE);
+  strcpy(str, res);
   int i = 0;
 
   char * token = strtok(str, SEPARATOR);
   while (token != NULL) {
-    aux = tweets[i];
-    strcpy(aux.user, token);
-    strcpy(aux.msg, strtok(NULL, SEPARATOR));
-    aux.id = atoi(strtok(NULL, SEPARATOR));
-    aux.likes = atoi(strtok(NULL, SEPARATOR));
-
-    printf("User: %s\n", aux.user);
-    printf("Msg: %s\n", aux.msg);
-    printf("Id: %d\n", aux.id);
-    printf("Likes: %d\n", aux.likes);
+    strcpy(tweets[i].user, token);
+    strcpy(tweets[i].msg, strtok(NULL, SEPARATOR));
+    tweets[i].id = atoi(strtok(NULL, SEPARATOR));
+    tweets[i].likes = atoi(strtok(NULL, SEPARATOR));
 
     token = strtok(NULL, SEPARATOR);
     i++;
   }
+
+  *count = i;
+  return tweets;
 }
 
 char * send_op(sessionADT se, char * op_bytes) {
@@ -97,7 +93,7 @@ char * send_op(sessionADT se, char * op_bytes) {
   set_request_msg(se->req, op_bytes);
 
   t_responseADT res = send_request(se->con, se->req);
-  get_request_msg(res, res_bytes);
+  get_response_msg(res, res_bytes);
 
   return res_bytes;
 }
