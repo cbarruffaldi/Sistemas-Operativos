@@ -1,4 +1,3 @@
-#include <sqlite3.h>
 #include "IPC.h"
 
 #include <stdlib.h>
@@ -6,10 +5,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
+#include <sqlite3.h>
+
+#define UNUSED(x) (void)(x)
 
 #define DATABASE_NAME "twitter.db"
 #define TABLE_TWITTER "twit"
+#define TABLE_CREATE "CREATE TABLE IF NOT EXISTS "TABLE_TWITTER" ( \
+                      id INT PRIMARY KEY, \
+                      author VARCHAR(32), \
+                      msg VARCHAR(150), \
+                      likes INT DEFAULT 0);"
 #define VALUE_SEPARATOR ':'
 #define ROW_SEPARATOR '\n'
 #define ARG_COUNT 2
@@ -41,7 +47,7 @@ int main(int argc, char *argv[]) {
 
   if(argc != ARG_COUNT) {
     fprintf(stderr, "Usage: %s <server_path>", argv[0]);
-  return 1;
+    return 1;
   }
 
   if (sqlite3_open(DATABASE_NAME, &db)) {
@@ -51,6 +57,7 @@ int main(int argc, char *argv[]) {
 
   if (setup_db(db) < 0) {
     printf("Failed to setup database\n");
+    sqlite3_close(db);
     return 1;
   }
 
@@ -85,9 +92,9 @@ int main(int argc, char *argv[]) {
   }
 }
 
+//TODO: mover query a una constante
 int setup_db(sqlite3 *db) {
-  char *sql = "CREATE TABLE IF NOT EXISTS "TABLE_TWITTER" ( \
-               id INT PRIMARY KEY, writer VARCHAR(32), msg VARCHAR(150), likes INT);";
+  char *sql = TABLE_CREATE;
   char *errmsg = NULL;
   sqlite3_exec(db, sql, NULL, NULL, &errmsg);
   if (errmsg != NULL) {
@@ -110,13 +117,14 @@ void * attend(void * p) {
   char sql[BUFSIZE];
   char *errmsg;
   t_requestADT req;
+  query_rows param;
+
+  t_responseADT res = create_response(); 
+
   pthread_data *data = (pthread_data *) p;
   sqlite3* db = data->db;
   t_connectionADT con = data->con;
-  pthread_mutex_t *lock = data->mutex;
-  t_responseADT res = create_response();
-
-  query_rows param;
+  pthread_mutex_t *mutex = data->mutex;
 
   free(p);
   while (1) {
@@ -134,7 +142,10 @@ void * attend(void * p) {
 
     printf("Received %s\n", sql);
 
+    pthread_mutex_lock(mutex);
     sqlite3_exec(db, sql, callback, &param, &errmsg);
+    pthread_mutex_unlock(mutex);
+
     if (errmsg != NULL)
       printf("exec error: %s\n", errmsg);
 
@@ -143,10 +154,6 @@ void * attend(void * p) {
     if (param.n > 0) {
       printf("Hay %d filas\n", param.rows);
       printf("%s\n", param.values);
-    }
-    else {
-      param.values[0] = 'K';
-      param.values[1] = '\0';
     }
 
     set_response_msg(res, param.values);
@@ -161,9 +168,11 @@ void * attend(void * p) {
   pthread_exit(NULL);
 }
 
-int callback (void *p, int argc, char *argv[], char *azColName[]) {
-  query_rows *param = (query_rows *) p;
+int callback (void *p, int argc, char *argv[], char *NotUsed[]) {
   int i;
+  query_rows *param = (query_rows *) p;
+
+  UNUSED(NotUsed); // Así no tira warning por parámetro no usado
 
   for (i = 0; i < argc; i++)
     concat_value(param, argv[i]);
