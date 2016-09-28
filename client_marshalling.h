@@ -2,7 +2,6 @@
 #define _MARSHALLING_
 
 #define SEPARATOR ":|:"
-#define SEP_START ":" // TODO: hacer con una funcion
 
 #define OPCODE_TWEET 1
 #define OPCODE_LIKE 2
@@ -28,6 +27,6 @@ int send_tweet(sessionADT se, char * user, char * msg);
 
 int send_like(sessionADT se, int tweet_id);
 
-t_tweet * send_refresh(int tw_count);
+t_tweet * send_refresh(sessionADT se, int tw_count, int * received_count);
 
 #endif
