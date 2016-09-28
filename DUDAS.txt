@@ -1,3 +1,1 @@
-¿Cumple con la consigna usar threads que comparten un puntero a la base de datos (sqlite3 *) y manejar la concurrencia con semáforos?
-
 Manejar el tema de límite de conexiones en sockets; emularlo en fifos a lo mejor
