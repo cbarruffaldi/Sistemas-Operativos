@@ -1,34 +1,56 @@
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
 #include <stdio.h>
 #include "server_marshalling.h"
 #include "IPC.h"
 
 #define DATABASE_PROCESS "database.bin"
 
-//argv[1] = nombre del server,
-//argv[2] = nombre de la base de datos
+typedef struct {
+  char *db_path;
+  t_sessionADT session;
+} pthread_data;
+
+//argv[1] = nombre del path a server,
+//argv[2] = nombre del path a  base de datos
 
 int main(int argc, char *argv[])
 {
-   addr_ADT addresses;
-   pid_t pid;
-   char * str;
+  t_master_sessionADT master_session;
+  t_sessionADT session;
 
-  //sprintf(str,"%s %s",argv[1], argv[2]);
-  pid = fork();
-
-  if (pid == 0) { 
-
-      //char *args [] ={argv[2], argv[1]};
-      execl(DATABASE_PROCESS, DATABASE_PROCESS, argv[2], NULL);
-      printf("FORK\n");
+  if (argc != 3) {
+    printf("Usage: %s <server_path> <database_path>\n", argv[0]);
+    return 1;
   }
 
-//  addresses = init(argv[1],argv[2]);
+  if (fork() == 0) { 
+      execl(DATABASE_PROCESS, DATABASE_PROCESS, argv[2], NULL);
+      printf("FORK no se debería imprimir\n");
+  }
 
-//  start_connection(addresses);
-  
+  master_session = setup_master_session(addresses);
+
+  while (1) {
+    session = accept_client(master_session);
+    create_thread(argv[2], session);
+  }
 }
 
+
+int create_thread(char * db_path, t_sessionADT session) {
+  pthread_t thread;
+  pthread_data * thdata = malloc(sizeof(*thdata));
+  thdata->db_path = db_path;
+  thdata->session;
+  return pthread_create(&thread, NULL, run_thread, thdata);
+}
+
+void * run_thread(void * p) {
+  pthread_data thdata = (pthread_data *) p;
+  t_connectionADT db_con = connect(p->db_path);
+  t_sessionADT session = thdata->session;
+  free(p);
+
+  attend(session);
+}

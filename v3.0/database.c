@@ -12,9 +12,9 @@
 
 #define TABLE_CREATE "CREATE TABLE IF NOT EXISTS "TABLE_TWIT" ( \
                       "ATR_TWIT_ID" INT PRIMARY KEY, \
-                      "ATR_TWIT_USER" VARCHAR("USER_SIZE"), \
-                      "ATR_TWIT_MSG" VARCHAR("MSG_SIZE"), \
-                      "ATR_TWIT_LIKES" INT DEFAULT 0);"
+                      "ATR_TWIT_USER" VARCHAR(%d) NOT NULL, \
+                      "ATR_TWIT_MSG" VARCHAR(%d) NOT NULL, \
+                      "ATR_TWIT_LIKES" INT DEFAULT 0 NOT NULL);"
 #define VALUE_SEPARATOR ':'
 #define ROW_SEPARATOR '\n'
 #define ARG_COUNT 2
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
   int rc;
 
   if(argc != ARG_COUNT) {
-    fprintf(stderr, "Usage: %s <server_path>", argv[0]);
+    fprintf(stderr, "Usage: %s <server_path>\n", argv[0]);
     return 1;
   }
 
@@ -92,10 +92,12 @@ int main(int argc, char *argv[]) {
 }
 
 int setup_db(sqlite3 *db) {
-  char *sql = TABLE_CREATE;
+  char sql[BUFSIZE]; 
+  sprintf(sql, TABLE_CREATE, USER_SIZE, MSG_SIZE);
   char *errmsg = NULL;
   sqlite3_exec(db, sql, NULL, NULL, &errmsg);
   if (errmsg != NULL) {
+    printf("error: %s\n", errmsg);
     sqlite3_free(errmsg);
     return -1;
   }
@@ -117,6 +119,8 @@ void * attend(void * p) {
   t_requestADT req;
   query_rows param;
 
+
+  printf("pthread: %lu\n", pthread_self());
   t_responseADT res = create_response(); 
 
   pthread_data *data = (pthread_data *) p;

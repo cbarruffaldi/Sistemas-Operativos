@@ -12,7 +12,7 @@
                    	WHERE "ATR_TWIT_ID" = %d;"
 
 #define Q_INSERT "INSERT INTO "TABLE_TWIT" values (\
-                  (SELECT 1+MAX("ATR_TWIT_ID") FROM "TABLE_TWIT"), '%s', '%s', 0);"
+                  (SELECT 1+COALESCE(MAX("ATR_TWIT_ID"),0) FROM "TABLE_TWIT"), '%s', '%s', 0);"
 
 void query_refresh(char *buffer, int id) {
 	sprintf(buffer, Q_REFRESH, id);

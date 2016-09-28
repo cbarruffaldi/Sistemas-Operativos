@@ -13,13 +13,13 @@
 #define CMDS_SIZE 3
 
 #define UNSUPPORTED -1
+#define UNSUPPORTED_MSG "Invalid Command."
 
-typedef struct addr * addr_ADT;
-typedef struct client_req * clireq_ADT;
+typedef struct t_session * t_sessionADT;
+typedef struct t_master_session * t_master_sessionADT;
 
-int start_connection(addr_ADT addresses);
-addr_ADT init(char * server, char * database);
-
+t_master_sessionADT setup_master_session(char *sv_path);
+t_sessionADT accept_client(t_master_sessionADT master_session);
 
 
 #endif

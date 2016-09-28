@@ -8,16 +8,17 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <pthread.h>
 
-#define FIFO_RESPONSE_PATH "/tmp/fifo_response_%d"  // Se le concatena el peer PID. Se asegura unicidad.
-#define FIFO_LISTEN_PATH "/tmp/fifo_listen_%d"
+// Se les concatena el peer PID y pthread. 
+// Se asegura unicidad entre procesos y threads.
+#define FIFO_RESPONSE_PATH "/tmp/fifo_response_%d%lu"
+#define FIFO_LISTEN_PATH "/tmp/fifo_listen_%d%lu"
 
 static t_responseADT read_response(char * fifo);
 static int write_to_fifo(char * fifo, void * content, int size);
 static void * read_from_fifo(char * fifo, int size);
 static void send_disconnect_signal(t_connectionADT con);
-
-//TODO: ver si hacer función genérica para manejar errores
 
 struct t_address {
   char path[BUFSIZE];
@@ -79,7 +80,7 @@ t_connectionADT connect_peer(t_addressADT addr) {
   if (fd < 0)
     return NULL;
 
-  sprintf(buffer, FIFO_LISTEN_PATH, pid);
+  sprintf(buffer, FIFO_LISTEN_PATH, getpid(), pthread_self());
   n = write(fd, buffer, sizeof(buffer));
   close(fd);
 
@@ -129,7 +130,7 @@ t_responseADT create_response() {
 t_requestADT create_request() {
   struct t_address res_addr;
   t_requestADT req = malloc(sizeof(struct t_request));
-  sprintf(res_addr.path, FIFO_RESPONSE_PATH, getpid());
+  sprintf(res_addr.path, FIFO_RESPONSE_PATH, getpid(), pthread_self());
   req->res_addr = res_addr;
 
   if(mkfifo(res_addr.path, 0666) < 0)  // Crea fifo
