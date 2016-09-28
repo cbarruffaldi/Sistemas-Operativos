@@ -1,1 +1,0 @@
-Manejar el tema de límite de conexiones en sockets; emularlo en fifos a lo mejor
