@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define ARG_COUNT 3
 #define DATABASE_PROCESS "database.bin"
@@ -15,6 +16,8 @@ typedef struct {
 
 //argv[1] = nombre del path a server,
 //argv[2] = nombre del path a  base de datos
+
+void * run_thread(void * p);
 
 int main(int argc, char *argv[])
 {
@@ -31,7 +34,7 @@ int main(int argc, char *argv[])
       printf("FORK no se debería imprimir\n");
   }
 
-  master_session = setup_master_session(addresses);
+  master_session = setup_master_session(argv[1]);
 
   while (1) {
     session = accept_client(master_session);
@@ -48,8 +51,9 @@ int create_thread(char * db_path, t_sessionADT session) {
 }
 
 void * run_thread(void * p) {
-  pthread_data thdata = (pthread_data *) p;
-  t_connectionADT db_con = connect(p->db_path);
+  pthread_data *thdata = (pthread_data *) p;
+  t_addressADT addr = create_address(thdata->db_path);
+  t_connectionADT con = connect_peer(addr);
   t_sessionADT session = thdata->session;
   free(p);
 

@@ -1,6 +1,7 @@
 //server_marshalling.c
 #include "include/server_marshalling.h"
 #include "include/IPC.h"
+#include "include/marshalling.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -26,11 +27,11 @@ typedef struct {
 } tw;
 
 //cantidad de id's para los tweets
-int tweet_id;
+int tw_id;
 
 int execute(char *args, t_responseADT res);
 
-tw create_tweet(char * usr, char * msg);
+t_tweet create_tweet(char * usr, char * msg);
 char * deploy_tweet (tw twe);
 
 void tweet( char * msg , t_responseADT res);
@@ -72,7 +73,7 @@ t_master_sessionADT setup_master_session(char *sv_path) {
 
   if (listen_peer(addr) < 0) {
     fprintf(stderr, "Cannot listen\n");
-    return 1;
+    return NULL;
   }
 
   se = malloc(sizeof(struct t_session));
@@ -99,17 +100,6 @@ t_sessionADT accept_client(t_master_sessionADT master_session) {
   return se;
 }
 
-int execute(char *command, t_responseADT res) {
-    int i;
-    for (i = 0; i < CMDS_SIZE; i++) {
-        if (command[0] == commands[i].name) {
-          (* commands[i].function) (args+1, req);
-          return 0;
-        }
-    }
-    return UNSUPPORTED;
-}
-
 int attend(t_sessionADT se) {
   char buffer[BUFSIZE];
   int valid;
@@ -127,23 +117,34 @@ int attend(t_sessionADT se) {
   }
 }
 
-void tweet(char * msg, t_responseADT res) {
+int execute(char *request, t_responseADT res) {
+    int i;
+    for (i = 0; i < CMDS_SIZE; i++) {
+        if (request[0] == commands[i].name[0]) {
+          (* commands[i].function) (request+1, res);
+          return 0;
+        }
+    }
+    return UNSUPPORTED;
+}
+
+void tweet(char * str, t_responseADT res) {
   char usr[USER_SIZE];
   char msg[MSG_SIZE];
-  char * str = malloc(BUFSIZE);
+  char * response = malloc(BUFSIZE);
   t_tweet tw;
 
   strcpy(usr, strtok(str, SEPARATOR));
   strcpy(msg, strtok(NULL, SEPARATOR));
 
-  t_tweet = create_tweet(usr, msg);
+  tw = create_tweet(usr, msg);
   //base de datos: Guardar el tweet
-  print_tweet(t_tweet);
+  print_tweet(tw);
 
   //get last id from database
-  sprintf(str, "%d", tw_id);
+  sprintf(response, "%d", tw_id);
 
-  set_response_msg(res, str);
+  set_response_msg(res, response);
 }
 
 void like(char * msg, t_responseADT res) {
@@ -168,9 +169,9 @@ void refresh(char * msg, t_responseADT res) {
 
 t_tweet create_tweet(char * usr, char * msg) {
   t_tweet tw = calloc(sizeof(struct t_tweet));
-  strcpy(tw.usr, usr);
+  strcpy(tw.user, usr);
   strcpy(tw.msg, msg);
-  tw.id = tweet_id++; // Pedirle ID a la base de datos
+  tw.id = tw_id++; // Pedirle ID a la base de datos
   tw.likes = 0;
   return tw;
 }
@@ -192,8 +193,9 @@ void print_tweet(t_tweet tw) {
 }
 
 void print_tweets(t_tweet * tws, int count) {
+  size_t i;
   print_line();
-  for (size_t i = 0; i < count; i++) {
+  for (i = 0; i < count; i++) {
     print_tweet(tws[i]);
   }
 }

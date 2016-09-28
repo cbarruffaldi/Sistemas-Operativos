@@ -10,6 +10,7 @@
 #define USER_SIZE 32
 #define MSG_SIZE 140
 
+#define COLUMNS 60
 
 typedef struct {
   char user[USER_SIZE];
