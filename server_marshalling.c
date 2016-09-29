@@ -62,7 +62,7 @@ struct t_session {
 };
 
 struct t_master_session {
-  t_addressADT addr;
+  t_addressADT addr;  
 };
 
 t_master_sessionADT setup_master_session(char *sv_path) {
