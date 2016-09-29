@@ -20,7 +20,7 @@ void query_refresh(char *buffer, int id) {
 }
 
 void query_like(char *buffer, int id) {
-	sprintf(buffer, Q_LIKE, id);
+	sprintf(buffer, Q_LIKE, id, id);
 }
 
 void query_insert(char *buffer, char *username, char *msg) {

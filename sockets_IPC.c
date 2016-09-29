@@ -15,7 +15,7 @@
 #include <netdb.h>
 #include <errno.h>
 
-#define MAX_CONNECTIONS 10
+#define MAX_CONNECTIONS 1024
 #define DELIMITATOR ':'
 
 t_addressADT create_address_port(char * hostname, int port);

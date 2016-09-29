@@ -1,6 +1,7 @@
 #include "include/server_marshalling.h"
 #include "include/IPC.h"
 #include "include/server.h"
+#include "include/query.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -24,6 +25,7 @@ typedef struct {
 //argv[1] = nombre del path a server,
 //argv[2] = nombre del path a  base de datos
 
+void send_query(t_session_data * data, const char *sql, char result[]);
 void * run_thread(void * p);
 void print_session_data(t_session_data *data);
 int create_thread(char * db_path, t_sessionADT session);
@@ -62,6 +64,7 @@ int create_thread(char * db_path, t_sessionADT session) {
 }
 
 void * run_thread(void * p) {
+  int valid;
   pthread_data *thdata = (pthread_data *) p;
   t_addressADT addr = create_address(thdata->db_path);
   t_connectionADT con = connect_peer(addr);
@@ -79,28 +82,56 @@ void * run_thread(void * p) {
 
   set_session_data(session, &se_data);
 
-  attend(session);
+  valid = attend(session);
+
+  if (valid == 0) {
+    printf("Client disconnected\n");
+  }
+  else if (valid == -1) {
+    printf("Failed to send response\n");
+  }
+
+  pthread_exit(NULL);
 }
 
-
-t_tweet * sv_tweet(void * p, char * user, char * msg, int last_id) {
-  printf("RECEIVED SV_TWEET_WITH \nuser:%s \nmsg:%s \nid:%d\n", user, msg, last_id);
-  print_session_data(p);
-  return NULL;
+// TODO: CAMBIAR LOS BUFSIZE
+int sv_tweet(void * p, char * user, char * msg) {
+  char buffer[BUFSIZE], res[BUFSIZE];
+  printf("RECEIVED SV_TWEET_WITH \nuser:%s \nmsg:%s\n", user, msg);
+  query_insert(buffer, user, msg);
+  send_query(p, buffer, res);
+  return 27;
 }
 
-t_tweet * sv_refresh(void * p, int last_id) {
+t_tweet * sv_refresh(void * p, int last_id, char res[]) {
+  char buffer[BUFSIZE];
   printf("RECEIVED SV_REFRESH WITH \nid:%d\n", last_id);
-  print_session_data(p);
+  query_refresh(buffer, last_id);
+  send_query(p, buffer, res);
+
   return NULL;
 }
 
-void sv_like(void * p, int id) {
+int sv_like(void * p, int id) {
+  char buffer[BUFSIZE], res[BUFSIZE];
   printf("RECEIVED SV_LIKE WITH \nid:%d\n", id);
-  print_session_data(p);
+  query_like(buffer, id);
+  send_query(p, buffer, res);
+  return 35;
 }
 
-void print_session_data(t_session_data *data) {
-  printf("connection: %p\n", data->db_con);
-  printf("request: %p\n", data->req);
+void send_query(t_session_data * data, const char *sql, char result[]) {
+  t_requestADT req = data->req;
+  t_connectionADT con = data->db_con;
+  t_responseADT res;
+
+  set_request_msg(req, sql);
+  res = send_request(con, req);
+  if (res == NULL) {
+    printf("Error on database response\n");
+    return;
+  }
+
+  get_response_msg(res, result);
+  printf("%s\n", result);
 }

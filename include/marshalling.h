@@ -1,13 +1,13 @@
 #ifndef _MARSHALLING_
 #define _MARSHALLING_
 
+#define MAX_TW_REFRESH 20
+
 #define SEPARATOR ":"
 
-#define OPCODE_TWEET "1"
-#define OPCODE_LIKE "2"
-#define OPCODE_REFRESH "3"
-
-#define TW_COLUMNS 4
+#define OPCODE_TWEET "0"
+#define OPCODE_LIKE "1"
+#define OPCODE_REFRESH "2"
 
 #define USER_SIZE 32
 #define MSG_SIZE 140

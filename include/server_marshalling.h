@@ -5,8 +5,9 @@
 
 #define CMDS_SIZE 3
 
+#define SUPPORTED 1
 #define UNSUPPORTED -1
-#define UNSUPPORTED_MSG "Invalid Command."
+#define UNSUPPORTED_MSG ""
 
 typedef struct t_session * t_sessionADT;
 typedef struct t_master_session * t_master_sessionADT;

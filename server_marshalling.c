@@ -9,15 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
-** Cada función decodifica msg, llama a la función del servidor y settea en
-** el response la respuesta. NO LA ENVÍA. attend se encarga de enviarla.
-*/
-typedef struct {
-    const char * name;  /* Nombre del comando */
-    void (*function) (char* msg, t_responseADT res, void * data);  /* Funcion correspondiente al comando */
-} command;
-
 struct t_session {
   t_connectionADT con;
   t_addressADT addr;
@@ -39,16 +30,13 @@ void tweet( char * msg , t_responseADT res, void * data);
 void like(char * msg, t_responseADT res, void * data);
 void refresh(char * msg, t_responseADT res, void * data);
 
-char * fill(char c, int length);
-void print_user(char * usr);
-void print_msg(char * msg);
-void print_line();
-void print_tweet(t_tweet tw);
+/*
+** Cada función decodifica msg, llama a la función del servidor y settea en
+** el response la respuesta. NO LA ENVÍA. attend se encarga de enviarla.
+*/
+typedef void (*command) (char* msg, t_responseADT res, void * data);
 
-static command commands[]= {{OPCODE_TWEET, tweet},
-{OPCODE_LIKE, like},
-{OPCODE_REFRESH, refresh}
-};
+static command commands[]= {tweet, like, refresh};
 
 t_master_sessionADT setup_master_session(char *sv_path) {
 
@@ -106,39 +94,41 @@ int attend(t_sessionADT se) {
 
   while(1) {
     req = read_request(con);
+    if (req == NULL)
+      return 0;
     get_request_msg(req, buffer);
     valid = execute(buffer, res, se->data);
     if (valid == UNSUPPORTED)
       set_response_msg(res, UNSUPPORTED_MSG);
-    send_response(req, res);
+    if (send_response(req, res) < 0)
+      return -1;
   }
 }
 
 int execute(char *request, t_responseADT res, void * data) {
     int i;
-    for (i = 0; i < CMDS_SIZE; i++) {
-        if (request[0] == commands[i].name[0]) {
-          (* commands[i].function) (request+1, res, data);
-          return 0;
-        }
-    }
-    return UNSUPPORTED;
+    int opcode = atoi(request);
+    char * start = strstr(request, SEPARATOR) + strlen(SEPARATOR);
+
+    if (opcode < 0 || opcode >= CMDS_SIZE)
+      return UNSUPPORTED;
+
+
+    (*commands[opcode]) (start, res, data);
+    return 1;
 }
 
 void tweet(char * str, t_responseADT res, void * data) {
   char usr[USER_SIZE];
   char msg[MSG_SIZE];
   char * response = malloc(BUFSIZE);
-  t_tweet tw;
 
   strcpy(usr, strtok(str, SEPARATOR));
   strcpy(msg, strtok(NULL, SEPARATOR));
 
-  sv_tweet(data, usr, msg, 2);
+  sv_tweet(data, usr, msg);
 
-  tw = create_tweet(usr, msg);
   //base de datos: Guardar el tweet
-  print_tweet(tw);
 
   //get last id from database
   sprintf(response, "%d", tw_id);
@@ -148,80 +138,19 @@ void tweet(char * str, t_responseADT res, void * data) {
 
 void like(char * msg, t_responseADT res, void * data) {
   int id = atoi(msg);
-  char * str = malloc(BUFSIZE); // donde almaceno lo que vuelve de DB
+  char str[4];
 
-  sv_like(data, 6); //MOCK TEST
+  int likes = sv_like(data, id);
 
-  //base de datos : +1 a likes del tweet por id
-  // get # de likes de la bd con id
-  sprintf(str, "%d", 0);
+  sprintf(str, "%d", likes);
   set_response_msg(res, str);
 }
 
 void refresh(char * msg, t_responseADT res, void * data) {
   int num = atoi(msg);
-  char * str = malloc(BUFSIZE);
-
-  //base de datos: retorna los tweets.
-  sprintf(str, "%d", 0);
-  sv_refresh(data, 9); //MOCK TEST
+  char str[BUFSIZE];
+  t_tweet * tws = sv_refresh(data, 0, str); //TODO: algo
+  //TODO: deploy tws
 
   set_response_msg(res, str); //lo que viene de DB lo manda directo por el tubo porque tiene bien los separadores.
-}
-
-t_tweet create_tweet(char * usr, char * msg) {
-  t_tweet tw;
-  strcpy(tw.user, usr);
-  strcpy(tw.msg, msg);
-  tw.id = tw_id++; // Pedirle ID a la base de datos
-  tw.likes = 0;
-  return tw;
-}
-
-
-/*Pasa un tweet a un String como id+user+message+likes
-char * deploy_tweet (t_tweet twe) {
-char * buffer;
-sprintf(buffer, "%d%s%s%d", twe->id, SEPARATOR, twe->usr, SEPARATOR, twe->msg, SEPARATOR, twe->likes);
-return buffer;
-
-}
-*/
-
-
-void print_tweet(t_tweet tw) {
-  print_user(tw.user);
-  print_msg(tw.msg);
-  printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, fill(' ', COLUMNS - 27));
-  print_line();
-}
-
-void print_tweets(t_tweet * tws, int count) {
-  int i;
-  print_line();
-  for (i = 0; i < count; i++) {
-    print_tweet(tws[i]);
-  }
-}
-
-void print_line() {
-  printf(" %s\n", fill('-', COLUMNS - 2));
-}
-
-void print_user(char * usr) {
-  printf("| %s:%s|\n", usr, fill(' ', COLUMNS - strlen(usr)%TW_COLUMNS - 4));
-}
-
-void print_msg(char * msg) {
-  printf("| %s%s|\n", msg, fill(' ', COLUMNS - strlen(msg)%TW_COLUMNS - 3));
-}
-
-char * fill(char c, int length) {
-  char * arr = malloc(length + 1);
-  int i = 0;
-  for (;i < length; i++) {
-    arr[i] = c;
-  }
-  arr[i] = '\0';
-  return arr;
 }

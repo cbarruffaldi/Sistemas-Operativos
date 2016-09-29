@@ -17,9 +17,9 @@ struct session {
   t_requestADT req;
 };
 
-static char * send_op(sessionADT se, char * op_bytes);
+static int send_op(sessionADT se, char * op_bytes, char res_bytes[BUFSIZE]);
 
-static t_tweet * process_tweets(char * res, int * count);
+static int process_tweets(char res[], t_tweet tws[]);
 
 sessionADT start_session(char * path) {
   sessionADT se = malloc(sizeof(struct session));
@@ -38,63 +38,64 @@ void end_session(sessionADT se) {
 // TODO: capaz se pueden modularizar
 
 int send_tweet(sessionADT se, char * user, char * msg) {
-  char * req_bytes = malloc(BUFSIZE), * res;
+  char req_bytes[BUFSIZE], res[BUFSIZE];
 
   sprintf(req_bytes, "%s%s%s%s%s", OPCODE_TWEET, SEPARATOR, user, SEPARATOR, msg);
 
-  res = send_op(se, req_bytes);
+  if (send_op(se, req_bytes, res) == 0) {
+    return -1;
+  }
 
   return atoi(res);
 }
 
 int send_like(sessionADT se, int tweet_id) {
-  char * req_bytes = malloc(BUFSIZE), * res;
+  char req_bytes[BUFSIZE], res[BUFSIZE];
 
   sprintf(req_bytes, "%s%s%d", OPCODE_LIKE, SEPARATOR, tweet_id);
 
-  res = send_op(se, req_bytes);
+  if (send_op(se, req_bytes, res) == 0) {
+    return -1;
+  }
 
   return atoi(res);
 }
 
-t_tweet * send_refresh(sessionADT se, int ref_count, int * received_count) {
-  char * req_bytes = malloc(BUFSIZE), * res;
+int send_refresh(sessionADT se, t_tweet tws[]) {
+  char req_bytes[BUFSIZE], res[BUFSIZE];
 
-  sprintf(req_bytes, "%s%s%d", OPCODE_REFRESH, SEPARATOR, ref_count);
+  sprintf(req_bytes, "%s%s", OPCODE_REFRESH, SEPARATOR);
 
-  res = send_op(se, req_bytes);
+  if (send_op(se, req_bytes, res) == 0) {
+    return -1;
+  }
 
-  return process_tweets(res, received_count);
+  return process_tweets(res, tws);
 }
 
-t_tweet * process_tweets(char * res, int * count) {
-  printf("Inside process_tweets\n");
-  t_tweet * tweets = malloc(BUFSIZE);
-  char str[BUFSIZE];
-  strcpy(str, res);
+static int process_tweets(char res[], t_tweet tws[]) {
+  char str[BUFSIZE]; // para proteger a res de las modificaciones que le hace strtok()
   int i = 0;
+  strcpy(str, res);
 
   char * token = strtok(str, SEPARATOR);
   while (token != NULL) {
-    tweets[i].id = atoi(token);
-    strcpy(tweets[i].user, strtok(NULL, SEPARATOR));
-    strcpy(tweets[i].msg, strtok(NULL, SEPARATOR));
-    tweets[i].likes = atoi(strtok(NULL, SEPARATOR));
+    tws[i].id = atoi(token);
+    strcpy(tws[i].user, strtok(NULL, SEPARATOR));
+    strcpy(tws[i].msg, strtok(NULL, SEPARATOR));
+    tws[i].likes = atoi(strtok(NULL, SEPARATOR));
 
     token = strtok(NULL, SEPARATOR);
     i++;
   }
 
-  *count = i;
-  printf("LEaving process tweets\n");
-  return tweets;
+  return i;
 }
 
-char * send_op(sessionADT se, char * op_bytes) {
-  char * res_bytes = malloc(BUFSIZE);
-
+static int send_op(sessionADT se, char * op_bytes, char res_bytes[BUFSIZE]) {
   set_request_msg(se->req, op_bytes);
   t_responseADT res = send_request(se->con, se->req);
-  get_response_msg(res, res_bytes);
-  return res_bytes;
+  if (res != NULL)
+    get_response_msg(res, res_bytes);
+  return res != NULL;
 }

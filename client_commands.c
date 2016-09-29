@@ -35,6 +35,7 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo);
 static int like(const char *args, sessionADT se, t_user *uinfo);
 static int refresh(const char *args, sessionADT se, t_user *uinfo);
 static int logout(const char *args, sessionADT se, t_user *uinfo);
+
 static int valid_like(const char *args);
 static char * fill(char c, int length);
 static void print_user(char usr[]);
@@ -106,7 +107,7 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo) {
   int len = strlen(args);
   if (len <= MSG_SIZE && len > 0) {
     printf("Received valid tweet: %s\n", args);
-	  send_tweet(se, uinfo->username, args); // retorna el ultimo id que tiene la bd
+	  send_tweet(se, uinfo->username, args); // TODO: retorna el ultimo id que tiene la bd. Si es mayor al que tiene el cliente, refresh.
     return VALID;
   }
   else if (len == 0) {
@@ -120,7 +121,7 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo) {
 }
 
 static int like(const char *args, sessionADT se, t_user *uinfo) {
-  int id;
+  int id, valid;
 
   if (!logged(uinfo))
     return NOT_LOGGED;
@@ -137,19 +138,26 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
   id = atoi(args);
   printf("Received valid like %d\n", id);
 
-	send_like(se, id);  // Devuelve el número de likes del tweet pero no se usa.
+	valid = send_like(se, id);  // Devuelve el número de likes del tweet pero no se usa.
+
+	if (valid == -1) {
+		printf("No tweet with id %d\n", id);
+		return INVALID_ARGS;
+	}
 
   return VALID;
 }
 
 static int refresh(const char *args, sessionADT se, t_user *uinfo) {
+	int count;
+	t_tweet tws[MAX_TW_REFRESH]; // TODO: cantidad de tws que devuelve refresh
   if (!logged(uinfo))
     return NOT_LOGGED;
-	int count;
-	t_tweet * tws = send_refresh(se, 10, &count); // TODO: cantidad de tws a refreshear
 
+	count = send_refresh(se, tws); // TODO: cantidad de tws a refreshear
   printf("Received refresh %s\n", args);
-	return 0;
+	print_tweets(tws, count);
+	return VALID;
 }
 
 static int logout(const char *args, sessionADT se, t_user *uinfo) {
@@ -171,18 +179,18 @@ static int valid_like(const char *args) {
   return 1;
 }
 
-static void print_tweet(t_tweet tw) {
-  print_user(tw.user);
-  print_msg(tw.msg);
-  printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, fill(' ', COLUMNS - 27));
-  print_border();
-}
-
 static void print_tweets(t_tweet * tws, int count) {
   print_border();
   for (size_t i = 0; i < count; i++) {
     print_tweet(tws[i]);
   }
+}
+
+static void print_tweet(t_tweet tw) {
+  print_user(tw.user);
+  print_msg(tw.msg);
+  printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, fill(' ', COLUMNS - 27)); // TODO: Hacer funcioncita
+  print_border();
 }
 
 static void print_border() {
