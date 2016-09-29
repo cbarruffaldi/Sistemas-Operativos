@@ -10,13 +10,12 @@
 
 #define UNUSED(x) (void)(x)
 
-#define TABLE_CREATE "CREATE TABLE IF NOT EXISTS "TABLE_TWIT" ( \
-                      "ATR_TWIT_ID" INT PRIMARY KEY, \
-                      "ATR_TWIT_USER" VARCHAR(%d) NOT NULL, \
-                      "ATR_TWIT_MSG" VARCHAR(%d) NOT NULL, \
-                      "ATR_TWIT_LIKES" INT DEFAULT 0 NOT NULL);"
-#define VALUE_SEPARATOR ':'
-#define ROW_SEPARATOR '\n'
+#define TABLE_CREATE "CREATE TABLE IF NOT EXISTS "TABLE_TWEET" ( \
+                      "ATR_TWEET_ID" INT PRIMARY KEY, \
+                      "ATR_TWEET_USER" VARCHAR(%d) NOT NULL, \
+                      "ATR_TWEET_MSG" VARCHAR(%d) NOT NULL, \
+                      "ATR_TWEET_LIKES" INT DEFAULT 0 NOT NULL);"
+
 #define ARG_COUNT 2
 
 typedef struct {
@@ -28,7 +27,7 @@ typedef struct {
 typedef struct {
   int n;
   int rows;
-  char values[BUFSIZE]; // las columnas se separan por ':' y las filas por \n
+  char values[BUFSIZE]; // las columnas se separan por VALUE_SEPARATOR y las filas por ROW_SEPARATOR
 } query_rows;
 
 int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3* db);

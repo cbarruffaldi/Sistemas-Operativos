@@ -26,6 +26,7 @@ typedef struct {
 
 void * run_thread(void * p);
 void print_session_data(t_session_data *data);
+int create_thread(char * db_path, t_sessionADT session);
 
 int main(int argc, char *argv[])
 {
