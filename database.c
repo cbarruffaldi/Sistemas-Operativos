@@ -10,16 +10,14 @@
 
 #define UNUSED(x) (void)(x)
 
-// TODO: Cambiar twit por tweet. No lo quiero hacer ahora para no romper
 #define TABLE_CREATE "CREATE TABLE IF NOT EXISTS "TABLE_TWIT" ( \
                       "ATR_TWIT_ID" INT PRIMARY KEY, \
                       "ATR_TWIT_USER" VARCHAR(%d) NOT NULL, \
                       "ATR_TWIT_MSG" VARCHAR(%d) NOT NULL, \
                       "ATR_TWIT_LIKES" INT DEFAULT 0 NOT NULL);"
-
+#define VALUE_SEPARATOR ':'
+#define ROW_SEPARATOR '\n'
 #define ARG_COUNT 2
-
-#define SEPARATOR ":|:" // TODO: podría sacarlo de marshalling.h pero se supone que es independiente
 
 typedef struct {
   t_connectionADT con;
@@ -28,15 +26,16 @@ typedef struct {
 } pthread_data;
 
 typedef struct {
-  int pointer;
-  char values[BUFSIZE];
-} query_data;
+  int n;
+  int rows;
+  char values[BUFSIZE]; // las columnas se separan por ':' y las filas por \n
+} query_rows;
 
 int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3* db);
 int callback (void *params, int argc, char *argv[], char *azColName[]);
 void * attend(void * p);
 int setup_db(sqlite3* db);
-void concat_value(query_data * qd, char *value);
+void concat_value(query_rows * q, char *value);
 
 int main(int argc, char *argv[]) {
   sqlite3 *db;
@@ -118,8 +117,7 @@ void * attend(void * p) {
   char sql[BUFSIZE];
   char *errmsg;
   t_requestADT req;
-  // query_rows param;
-  query_data query;
+  query_rows param;
 
   t_responseADT res = create_response();
 
@@ -131,7 +129,8 @@ void * attend(void * p) {
   free(p);
 
   while (1) {
-    query.pointer = 0;
+    param.n = param.rows = 0;
+
     printf("Reading request\n");
     req = read_request(con);
 
@@ -146,17 +145,22 @@ void * attend(void * p) {
 
     /* Comienzo de zona crítica */
     pthread_mutex_lock(mutex);
-    sqlite3_exec(db, sql, callback, &query, &errmsg);
+    sqlite3_exec(db, sql, callback, &param, &errmsg);
     pthread_mutex_unlock(mutex);
     /* Fin zona crítica */
 
     if (errmsg != NULL)
       printf("exec error: %s\n", errmsg);
 
-    query.values[pointer - 1] = '\0';
+    param.values[param.n-1] = '\0';
 
-    set_response_msg(res, query.values);
-    printf("Sending response %s\n", query.values);
+    if (param.n > 0) {
+      printf("Hay %d fila%c\n", param.rows, param.rows == 1 ? '\0' : 's');
+      printf("%s\n", param.values);
+    }
+
+    set_response_msg(res, param.values);
+    printf("Sending response %s\n", param.values);
 
     if (send_response(req, res) < 0) {
       printf("Failed to send response\n");
@@ -169,22 +173,22 @@ void * attend(void * p) {
 
 int callback (void *p, int argc, char *argv[], char *NotUsed[]) {
   int i;
-  query_data * qd = (query_data *) p;
+  query_rows *param = (query_rows *) p;
 
   UNUSED(NotUsed); // Así no tira warning por parámetro no usado
 
   for (i = 0; i < argc; i++)
-    concat_value(qd, argv[i]);
+    concat_value(param, argv[i]);
+  param->rows = param->rows+1;
+  param->values[param->n-1] = ROW_SEPARATOR;
 
   return 0;
 }
 
-void concat_value(query_data * qd, char *value) {
-  int i, sep_len = strlen(SEPARATOR);
-
-  for (i = 0, j = qd->pointer; value[i] != '\0'; i++, j++)
-    qd->values[j] = value[i];
-
-  strcpy(qd->values + j, SEPARATOR);
-  qd->pointer = j + sep_len;
+void concat_value(query_rows * q, char *value) {
+  int i, j;
+  for (i = 0, j = q->n; value[i] != '\0'; i++, j++)
+    q->values[j] = value[i];
+  q->values[j++] = VALUE_SEPARATOR;
+  q->n = j;
 }

@@ -38,6 +38,15 @@ void tweet( char * msg , t_responseADT res);
 void like(char * msg, t_responseADT res);
 void refresh(char * msg, t_responseADT res);
 
+
+//
+char * fill(char c, int length);
+void print_user(char * usr);
+void print_msg(char * msg);
+void print_line();
+void print_tweet(t_tweet tw);
+
+
 static command commands[]= {{OPCODE_TWEET, tweet},
 {OPCODE_LIKE, like},
 {OPCODE_REFRESH, refresh}
@@ -50,11 +59,11 @@ struct t_session {
 };
 
 struct t_master_session {
-  t_addressADT addr;
+  t_addressADT addr;  
 };
 
 t_master_sessionADT setup_master_session(char *sv_path) {
-
+    
   t_addressADT addr = create_address(sv_path);
   t_master_sessionADT se;
 
@@ -159,10 +168,56 @@ void refresh(char * msg, t_responseADT res) {
 }
 
 t_tweet create_tweet(char * usr, char * msg) {
-  t_tweet tw;
+  t_tweet tw = calloc(sizeof(struct t_tweet));
   strcpy(tw.user, usr);
   strcpy(tw.msg, msg);
   tw.id = tw_id++; // Pedirle ID a la base de datos
   tw.likes = 0;
   return tw;
+}
+
+/*Pasa un tweet a un String como id+user+message+likes
+char * deploy_tweet (tweet twe) {
+char * buffer;
+sprintf(buffer, "%d%s%s%d", twe->id, SEPARATOR, twe->usr, SEPARATOR, twe->msg, SEPARATOR, twe->likes);
+return buffer;
+
+}
+*/
+
+void print_tweet(t_tweet tw) {
+  print_user(tw.user);
+  print_msg(tw.msg);
+  printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, fill(' ', COLUMNS - 27));
+  print_line();
+}
+
+void print_tweets(t_tweet * tws, int count) {
+  size_t i;
+  print_line();
+  for (i = 0; i < count; i++) {
+    print_tweet(tws[i]);
+  }
+}
+
+void print_line() {
+  printf(" %s\n", fill('-', COLUMNS - 2));
+}
+
+void print_user(char * usr) {
+  printf("| %s:%s|\n", usr, fill(' ', COLUMNS - strlen(usr)%TW_COLUMNS - 4));
+}
+
+void print_msg(char * msg) {
+  printf("| %s%s|\n", msg, fill(' ', COLUMNS - strlen(msg)%TW_COLUMNS - 3));
+}
+
+char * fill(char c, int length) {
+  char * arr = malloc(length + 1);
+  int i = 0;
+  for (;i < length; i++) {
+    arr[i] = c;
+  }
+  arr[i] = '\0';
+  return arr;
 }
