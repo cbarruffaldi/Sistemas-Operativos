@@ -26,7 +26,7 @@ struct t_session {
 };
 
 struct t_master_session {
-  t_addressADT addr;  
+  t_addressADT addr;
 };
 
 //cantidad de id's para los tweets
@@ -66,7 +66,7 @@ struct t_master_session {
 };
 
 t_master_sessionADT setup_master_session(char *sv_path) {
-    
+
   t_addressADT addr = create_address(sv_path);
   t_master_sessionADT se;
 

@@ -50,12 +50,12 @@ int main(int argc, char *argv[]) {
   }
 
   if (sqlite3_open(DATABASE_NAME, &db)) {
-    printf("Could not open db\n%s", sqlite3_errmsg(db));
+    printf("[BD]: Could not open db\n%s", sqlite3_errmsg(db));
     return 1;
   }
 
   if (setup_db(db) < 0) {
-    printf("Failed to setup database\n");
+    printf("[BD]: Failed to setup database\n");
     sqlite3_close(db);
     return 1;
   }
@@ -66,26 +66,25 @@ int main(int argc, char *argv[]) {
   db_addr = create_address(argv[1]);
 
   if (listen_peer(db_addr) < 0) {
-    fprintf(stderr, "Cannot listen\n");
+    fprintf(stderr, "[BD]: Cannot listen\n");
     return 1;
   }
 
   while (1) {
-    printf("Awaiting accept...\n");
+    printf("[BD]: Awaiting accept...\n");
 
     con = accept_peer(db_addr);
 
     if (con == NULL) {
-      printf("Accept failed.\n");
+      printf("[BD]: Accept failed.\n");
       return 0;
     }
 
-    printf("Accepted!\n");
-
+    printf("[BD]: Accepted!\n");
     rc = create_thread(con, mutex, db);
 
     if (rc) {
-      printf("Failed to create thread\n");
+      printf("[BD]: Failed to create thread\n");
       return 1;
     }
   }
@@ -97,7 +96,7 @@ int setup_db(sqlite3 *db) {
   char *errmsg = NULL;
   sqlite3_exec(db, sql, NULL, NULL, &errmsg);
   if (errmsg != NULL) {
-    printf("error: %s\n", errmsg);
+    printf("[BD]: error: %s\n", errmsg);
     sqlite3_free(errmsg);
     return -1;
   }
@@ -131,17 +130,17 @@ void * attend(void * p) {
   while (1) {
     param.n = param.rows = 0;
 
-    printf("Reading request\n");
+    printf("[BD]: Reading request\n");
     req = read_request(con);
 
     if (req == NULL) {
-      printf("Failed to read request\n");
+      printf("[BD]: Failed to read request\n");
       pthread_exit(NULL);
     }
 
     get_request_msg(req, sql);
 
-    printf("Received %s\n", sql);
+    printf("[BD]: Received %s\n", sql);
 
     /* Comienzo de zona crítica */
     pthread_mutex_lock(mutex);
@@ -150,20 +149,20 @@ void * attend(void * p) {
     /* Fin zona crítica */
 
     if (errmsg != NULL)
-      printf("exec error: %s\n", errmsg);
+      printf("[BD]: exec error: %s\n", errmsg);
 
     param.values[param.n-1] = '\0';
 
     if (param.n > 0) {
-      printf("Hay %d fila%c\n", param.rows, param.rows == 1 ? '\0' : 's');
-      printf("%s\n", param.values);
+      printf("[BD]: Hay %d fila%c\n", param.rows, param.rows == 1 ? '\0' : 's');
+      printf("[BD]: %s\n", param.values);
     }
 
     set_response_msg(res, param.values);
-    printf("Sending response %s\n", param.values);
+    printf("[BD]: Sending response %s\n", param.values);
 
     if (send_response(req, res) < 0) {
-      printf("Failed to send response\n");
+      printf("[BD]: Failed to send response\n");
       pthread_exit(NULL);
     }
   }
