@@ -1,3 +1,4 @@
+
 //server_marshalling.c
 #include "include/server_marshalling.h"
 #include "include/IPC.h"
@@ -19,12 +20,15 @@ typedef struct {
     void (*function) (char* msg, t_responseADT res);  /* Funcion correspondiente al comando */
 } command;
 
-typedef struct {
-    int id;
-    int likes;
-    char msg[140];
-    char user[32];
-} tw;
+struct t_session {
+  t_connectionADT con;
+  t_addressADT addr;
+  void * data;
+};
+
+struct t_master_session {
+  t_addressADT addr;
+};
 
 //cantidad de id's para los tweets
 int tw_id;
@@ -59,11 +63,11 @@ struct t_session {
 };
 
 struct t_master_session {
-  t_addressADT addr;  
+  t_addressADT addr;
 };
 
 t_master_sessionADT setup_master_session(char *sv_path) {
-    
+
   t_addressADT addr = create_address(sv_path);
   t_master_sessionADT se;
 

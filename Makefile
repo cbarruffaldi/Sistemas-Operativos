@@ -1,6 +1,10 @@
-FLAGS=-Wall -Wextra -g
-CLIENT=client.c
-SERVER=server.c
+#Agregar -Wall y -WExtra eventualmente
+
+FLAGS= -g
+CLIENT=client.c client_commands.c client_marshalling.c
+CLIENT_BIN = client.bin
+SERVER=server.c server_marshalling.c
+SERVER_BIN=server.bin
 DATABASE=database.c
 
 sockets:
@@ -13,4 +17,3 @@ fifo:
 clean:
 	rm -v *.bin
 	rm -f -v fifo_server /tmp/fifo_peer_*
-
