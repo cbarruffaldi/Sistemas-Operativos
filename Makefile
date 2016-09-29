@@ -17,3 +17,4 @@ fifo:
 clean:
 	rm -v *.bin
 	rm -f -v fifo_server /tmp/fifo_peer_*
+

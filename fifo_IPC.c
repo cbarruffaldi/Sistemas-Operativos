@@ -1,4 +1,3 @@
-
 #include "include/IPC.h"
 
 #include <stdio.h>
@@ -11,7 +10,7 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-// Se les concatena el peer PID y pthread.
+// Se les concatena el peer PID y pthread. 
 // Se asegura unicidad entre procesos y threads.
 #define FIFO_RESPONSE_PATH "/tmp/fifo_response_%d%lu"
 #define FIFO_LISTEN_PATH "/tmp/fifo_listen_%d%lu"
