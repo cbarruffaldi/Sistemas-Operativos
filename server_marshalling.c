@@ -1,3 +1,4 @@
+
 //server_marshalling.c
 #include "include/server_marshalling.h"
 #include "include/IPC.h"
@@ -25,7 +26,7 @@ struct t_session {
 };
 
 struct t_master_session {
-  t_addressADT addr;  
+  t_addressADT addr;
 };
 
 //cantidad de id's para los tweets
@@ -51,7 +52,7 @@ static command commands[]= {{OPCODE_TWEET, tweet},
 };
 
 t_master_sessionADT setup_master_session(char *sv_path) {
-    
+
   t_addressADT addr = create_address(sv_path);
   t_master_sessionADT se;
 
