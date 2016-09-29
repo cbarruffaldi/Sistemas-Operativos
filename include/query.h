@@ -3,6 +3,8 @@
 
 #include "database.h"
 
+#include TW_BLOCK_SIZE 10
+
 /* Las funciones almacenan en buffer la query */
 
 void query_refresh(char *buffer, int id);
