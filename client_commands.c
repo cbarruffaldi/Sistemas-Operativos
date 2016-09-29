@@ -174,8 +174,9 @@ static void print_tweet(t_tweet tw) {
 }
 
 static void print_tweets(t_tweet * tws, int count) {
+  int i;
   print_line();
-  for (size_t i = 0; i < count; i++) {
+  for (i = 0; i < count; i++) {
     print_tweet(tws[i]);
   }
 }

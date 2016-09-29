@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 	   return 1;
   }
 
- // se = start_session(argv[1]);
+  se = start_session(argv[1]);
 
   if (se == NULL) {
     printf("Failed to connect\n");
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(buffer, EXIT) == 0) { // se recibió EXIT --> nos vamos
       printf("Exiting...\n");
-  //    end_session(se);
+      end_session(se);
       return 0;
     }
 

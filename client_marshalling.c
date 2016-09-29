@@ -20,10 +20,10 @@ static char * send_op(sessionADT se, char * op_bytes);
 
 static t_tweet * process_tweets(char * res, int * count);
 
-sessionADT start_session(char * a) {
+sessionADT start_session(char * path) {
   sessionADT se = malloc(sizeof(struct session));
+  t_addressADT sv_addr = create_address(path);
   se->req = create_request();
-  t_addressADT sv_addr = create_address(a);
   se->con = connect_peer(sv_addr);
   return se;
 }
@@ -67,6 +67,7 @@ t_tweet * send_refresh(sessionADT se, int ref_count, int * received_count) {
 }
 
 t_tweet * process_tweets(char * res, int * count) {
+  printf("Inside process_tweets\n");
   t_tweet * tweets = malloc(BUFSIZE);
   char str[BUFSIZE];
   strcpy(str, res);
@@ -84,6 +85,7 @@ t_tweet * process_tweets(char * res, int * count) {
   }
 
   *count = i;
+  printf("LEaving process tweets\n");
   return tweets;
 }
 
@@ -91,9 +93,7 @@ char * send_op(sessionADT se, char * op_bytes) {
   char * res_bytes = malloc(BUFSIZE);
 
   set_request_msg(se->req, op_bytes);
-
   t_responseADT res = send_request(se->con, se->req);
   get_response_msg(res, res_bytes);
-
   return res_bytes;
 }

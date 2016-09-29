@@ -7,6 +7,8 @@
 #define OPCODE_LIKE "2"
 #define OPCODE_REFRESH "3"
 
+#define TW_COLUMNS 4
+
 #define USER_SIZE 32
 #define MSG_SIZE 140
 

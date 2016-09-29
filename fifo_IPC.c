@@ -75,7 +75,7 @@ t_connectionADT accept_peer(t_addressADT addr) {
 t_connectionADT connect_peer(t_addressADT addr) {
   char buffer[BUFSIZE];
   t_connectionADT con;
-  int n, fd = open(addr->path, O_WRONLY), pid = getpid();
+  int n, fd = open(addr->path, O_WRONLY);
 
   if (fd < 0)
     return NULL;
