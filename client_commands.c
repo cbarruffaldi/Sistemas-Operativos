@@ -37,10 +37,13 @@ static int refresh(const char *args, sessionADT se, t_user *uinfo);
 static int logout(const char *args, sessionADT se, t_user *uinfo);
 static int valid_like(const char *args);
 static char * fill(char c, int length);
-static void print_user(char * usr);
-static void print_msg(char * msg);
-static void print_line();
+static void print_user(char usr[]);
+static void print_msg(char msg[]);
+static void print_border();
 static void print_tweet(t_tweet tw);
+static void print_tweets(t_tweet * tws, int count);
+static void close_line(int filled);
+static void start_line();
 
 static void show_cmd_help(command cmd);
 
@@ -172,27 +175,54 @@ static void print_tweet(t_tweet tw) {
   print_user(tw.user);
   print_msg(tw.msg);
   printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, fill(' ', COLUMNS - 27));
-  print_line();
+  print_border();
 }
 
 static void print_tweets(t_tweet * tws, int count) {
-  int i;
-  print_line();
-  for (i = 0; i < count; i++) {
+  print_border();
+  for (size_t i = 0; i < count; i++) {
     print_tweet(tws[i]);
   }
 }
 
-static void print_line() {
+static void print_border() {
   printf(" %s\n", fill('-', COLUMNS - 2));
 }
 
-static void print_user(char * usr) {
+static void print_user(char usr[]) {
   printf("| %s:%s|\n", usr, fill(' ', COLUMNS - strlen(usr) - 4));
 }
 
-static void print_msg(char * msg) {
-  printf("| %s%s|\n", msg, fill(' ', COLUMNS - strlen(msg) - 3));
+static void print_msg(char msg[]) {
+  char * word = strtok(msg, " ");
+  int filled = 0;
+
+	start_line();
+  while (word != NULL) {
+    int wlen = strlen(word);
+    if (wlen + filled < COLUMNS - 4 || \
+      (filled > 0 && wlen > COLUMNS - 4)) { // la palabra no entra en un renglon entero.
+      printf("%s ", word);
+      filled += (wlen + 1);
+      word = strtok(NULL, " ");
+    }
+    else {
+			close_line(filled);
+      start_line();
+      filled = 0;
+    }
+  }
+  close_line(filled);
+}
+
+static void start_line() {
+	printf("| ");
+}
+
+static void close_line(int filled) {
+  int c = COLUMNS - filled - 3;
+  c = (c >= 0) ? c : 0;
+	printf("%s|\n", fill(' ', c));
 }
 
 static char * fill(char c, int length) {
