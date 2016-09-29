@@ -1,3 +1,4 @@
+
 #include "include/server_marshalling.h"
 #include "include/IPC.h"
 #include "include/server.h"
@@ -37,7 +38,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  if (fork() == 0) { 
+  if (fork() == 0) {
       execl(DATABASE_PROCESS, DATABASE_PROCESS, argv[2], NULL);
       printf("FORK no se debería imprimir\n");
   }
