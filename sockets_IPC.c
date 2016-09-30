@@ -15,6 +15,7 @@
 #include <netdb.h>
 #include <errno.h>
 
+#define HOSTNAME_SIZE 64
 #define MAX_CONNECTIONS 1024
 #define DELIMITATOR ':'
 
@@ -90,11 +91,14 @@ void unaccept(t_connectionADT con) {
 }
 
 t_addressADT create_address(char * host) {
-  char * occurrence = strchr(host, DELIMITATOR);
+  char hostname[HOSTNAME_SIZE];
+  char * occurrence;
+  strcpy(hostname, host);
+  occurrence = strchr(hostname, DELIMITATOR);
   if (occurrence == NULL)
     return NULL;
   *occurrence = '\0';
-  return create_address_port(host, atoi(occurrence+1));
+  return create_address_port(hostname, atoi(occurrence+1));
 }
 
 t_addressADT create_address_port(char * hostname, int port) {

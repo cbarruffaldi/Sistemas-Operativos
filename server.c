@@ -11,9 +11,11 @@
 
 #define ARG_COUNT 3
 #define DATABASE_PROCESS "database.bin"
+#define PATH_SIZE 64
+
 
 typedef struct {
-  char *db_path;
+  char db_path[PATH_SIZE];
   t_sessionADT session;
 } pthread_data;
 
@@ -58,7 +60,7 @@ int main(int argc, char *argv[])
 int create_thread(char * db_path, t_sessionADT session) {
   pthread_t thread;
   pthread_data * thdata = malloc(sizeof(*thdata));
-  thdata->db_path = db_path;
+  strcpy(thdata->db_path, db_path);
   thdata->session = session;
   return pthread_create(&thread, NULL, run_thread, thdata);
 }
@@ -66,10 +68,22 @@ int create_thread(char * db_path, t_sessionADT session) {
 void * run_thread(void * p) {
   int valid;
   pthread_data *thdata = (pthread_data *) p;
-  t_addressADT addr = create_address(thdata->db_path);
-  t_connectionADT con = connect_peer(addr);
   t_sessionADT session = thdata->session;
   t_requestADT req = create_request();
+  t_addressADT addr = create_address(thdata->db_path);
+  t_connectionADT con;
+
+  if (addr == NULL) {
+    printf("[SV]: Failed to create address\n");
+    pthread_exit(NULL);
+  }
+
+  con = connect_peer(addr);
+
+  if (con == NULL) {
+    printf("[SV]: Failed to connect to DB\n");
+    pthread_exit(NULL);
+  }
 
   t_session_data se_data;
 
