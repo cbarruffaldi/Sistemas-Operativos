@@ -13,7 +13,6 @@
 #define DATABASE_PROCESS "database.bin"
 #define PATH_SIZE 64
 
-
 typedef struct {
   char db_path[PATH_SIZE];
   t_sessionADT session;
@@ -22,6 +21,7 @@ typedef struct {
 typedef struct {
   t_connectionADT db_con;
   t_requestADT req;
+  char user[USER_SIZE];
 } t_session_data;
 
 //argv[1] = nombre del path a server,
@@ -31,6 +31,7 @@ void send_query(t_session_data * data, const char *sql, char result[]);
 void * run_thread(void * p);
 void print_session_data(t_session_data *data);
 int create_thread(char * db_path, t_sessionADT session);
+int logged(t_session_data * data);
 
 int main(int argc, char *argv[])
 {
@@ -93,6 +94,7 @@ void * run_thread(void * p) {
 
   se_data.db_con = con;
   se_data.req = req;
+  se_data.user[0] = '\0';
 
   set_session_data(session, &se_data);
 
@@ -104,18 +106,45 @@ void * run_thread(void * p) {
   else if (valid == -1) {
     printf("Failed to send response\n");
   }
-  
+
   disconnect(con);
   free_request(req);
   free_address(addr);
   pthread_exit(NULL);
 }
 
-// TODO: CAMBIAR LOS BUFSIZE
-int sv_tweet(void * p, char * user, char * msg) {
-  char buffer[BUFSIZE], res[BUFSIZE];
-  printf("RECEIVED SV_TWEET_WITH \nuser:%s \nmsg:%s\n", user, msg);
-  query_insert(buffer, user, msg);
+int sv_login(void * p, const char * username) {
+  char * user = ((t_session_data *) p)->user;
+
+  printf("[SV]: RECEIVED SV_LOGIN from %s\n", username);
+
+  if (!logged(p) && strlen(username) < USER_SIZE) {
+    printf("[SV]: User logged in as %s\n", username);
+    strcpy(user, username);
+    return 1;
+  }
+
+  return 0;
+}
+
+int sv_logout(void * p) {
+  char *user = ((t_session_data *) p)->user;
+  if (!logged(p))
+    return 0;
+  printf("User %s logged out\n", user);
+  user[0] = '\0';
+  return 1;
+}
+
+int sv_tweet(void * p, const char * msg) {
+  char buffer[QUERY_SIZE], res[QUERY_SIZE];
+  char *username = ((t_session_data *) p)->user;
+  printf("RECEIVED SV_TWEET_WITH \nuser:%s \nmsg:%s\n", username, msg);
+
+  if (!logged(p))
+    return -1;
+
+  query_insert(buffer, username, msg);
   send_query(p, buffer, res);
 
   return atoi(res);
@@ -123,17 +152,27 @@ int sv_tweet(void * p, char * user, char * msg) {
 
 //TODO: por ahora usa res para guardar la respuesta de la BD, debería devolver arreglo de t_tweet
 t_tweet * sv_refresh(void * p, int last_id, char res[]) {
-  char buffer[BUFSIZE];
+  char buffer[QUERY_SIZE];
   printf("RECEIVED SV_REFRESH WITH \nid:%d\n", last_id);
+
+  if (!logged(p)) {
+    res[0] = '\0';
+    return NULL;
+  }
+
   query_refresh(buffer, last_id);
   send_query(p, buffer, res);
-  printf("Received from DB REFRESH: %s \n", res);
+
   return NULL;
 }
 
 int sv_like(void * p, int id) {
-  char buffer[BUFSIZE], res[BUFSIZE];
+  char buffer[QUERY_SIZE], res[QUERY_SIZE];
   printf("RECEIVED SV_LIKE WITH \nid:%d\n", id);
+
+  if (!logged(p))
+    return -1;
+
   query_like(buffer, id);
   send_query(p, buffer, res);
 
@@ -148,10 +187,14 @@ void send_query(t_session_data * data, const char *sql, char result[]) {
   set_request_msg(req, sql);
   res = send_request(con, req);
   if (res == NULL) {
-    printf("Error on database response\n");
+    printf("[SV]: Error on database response\n");
     return;
   }
 
   get_response_msg(res, result);
   printf("%s\n", result);
+}
+
+int logged(t_session_data * data) {
+  return data->user[0] != '\0';
 }

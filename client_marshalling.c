@@ -35,12 +35,10 @@ void end_session(sessionADT se) {
   free(se);
 }
 
-// TODO: capaz se pueden modularizar
-
-int send_tweet(sessionADT se, char * user, char * msg) {
+int send_tweet(sessionADT se, const char * msg) {
   char req_bytes[BUFSIZE], res[BUFSIZE];
 
-  sprintf(req_bytes, "%s%s%s%s%s", OPCODE_TWEET, SEPARATOR, user, SEPARATOR, msg);
+  sprintf(req_bytes, "%s%s%s", OPCODE_TWEET, SEPARATOR, msg);
 
   if (send_op(se, req_bytes, res) == 0) {
     return -1;
@@ -81,6 +79,28 @@ t_tweet * send_refresh(sessionADT se, int *size) {
   } while (count == MAX_TW_REFRESH);
 
   return tws;
+}
+
+int send_login (sessionADT se, const char *username) {
+  char req_bytes[SHORTBUF], res[SHORTBUF];
+  sprintf(req_bytes, "%s%s%s", OPCODE_LOGIN, SEPARATOR, username);
+
+  if (send_op(se, req_bytes, res) == 0) {
+    return -1;
+  }
+
+  return 1;
+}
+
+int send_logout (sessionADT se) {
+  char req_bytes[SHORTBUF], res[SHORTBUF];
+  sprintf(req_bytes, "%s%s", OPCODE_LOGOUT, SEPARATOR);
+
+  if (send_op(se, req_bytes, res) == 0) {
+    return -1;
+  }
+
+  return 1;
 }
 
 static int process_tweets(char res[], t_tweet * tws) {

@@ -85,6 +85,7 @@ static int login(const char *args, sessionADT se, t_user *uinfo) {
   if (len <= USER_SIZE && len > 0) {
     strcpy(uinfo->username, args);
     uinfo->twit_id = 0;
+		send_login(se, args);
     return VALID;
   }
   else if (len == 0) {
@@ -98,13 +99,15 @@ static int login(const char *args, sessionADT se, t_user *uinfo) {
 }
 
 static int tweet(const char *args, sessionADT se, t_user *uinfo) {
-  if (!logged(uinfo))
-    return NOT_LOGGED;
 	int ret;
   int len = strlen(args);
+
+  if (!logged(uinfo))
+    return NOT_LOGGED;
+
   if (len <= MSG_SIZE && len > 0) {
     printf("Received valid tweet: %s\n", args);
-	  ret = send_tweet(se, uinfo->username, args);
+	  ret = send_tweet(se, args);
 
 		printf("ret: %d\n", ret);
 		refresh(args, se, uinfo);
@@ -171,6 +174,7 @@ static int logout(const char *args, sessionADT se, t_user *uinfo) {
   if (!logged(uinfo))
     return NOT_LOGGED;
   uinfo->username[0] = '\0';
+	send_logout(se);
   return VALID;
 }
 

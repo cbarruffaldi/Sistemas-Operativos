@@ -27,14 +27,14 @@ t_responseADT create_response();
 void free_response(t_responseADT res);
 
 // Settea el mensaje del response
-void set_response_msg(t_responseADT res, char *msg);
+void set_response_msg(t_responseADT res, const char *bytes);
 
 // Getter de la info en el response. Copia el mensaje en buffer. Buffer debe tener BUFISZE bytes de espacio.
 // Libera los recursos del response.
 void get_response_msg(t_responseADT res, char buffer[]);
 
 // Settea el mensaje del request.
-void set_request_msg(t_requestADT req, char *msg);
+void set_request_msg(t_requestADT req, const char *bytes);
 
 // Envia un request y devuelve su respuesta.
 t_responseADT send_request(t_connectionADT con, t_requestADT req);
@@ -46,7 +46,7 @@ t_responseADT send_request(t_connectionADT con, t_requestADT req);
 void free_request(t_requestADT req);
 
 // Crea el adress correspondiente al string dado.
-t_addressADT create_address(char * path);
+t_addressADT create_address(const char * path);
 
 // Libera el address y los recursos asociados a él.
 void free_address(t_addressADT addr);
@@ -78,7 +78,7 @@ void unlisten_peer(t_addressADT con);
 t_requestADT read_request(t_connectionADT con);
 
 // Getter de la info en el request. Copia el mensaje en buffer. Buffer debe tener 1024 bytes de espacio.
-void get_request_msg(t_requestADT req, char *buffer);
+void get_request_msg(t_requestADT req, char buffer[]);
 
 // Responde al peer que envió el request dado como parámetro.
 int send_response(t_requestADT req, t_responseADT res);

@@ -3,11 +3,8 @@
 
 #include "marshalling.h"
 
-#define CMDS_SIZE 3
-
 #define SUPPORTED 1
 #define UNSUPPORTED -1
-#define UNSUPPORTED_MSG ""
 
 /* Representa una conexión cliente -> servidor */
 typedef struct t_session * t_sessionADT;
@@ -28,7 +25,8 @@ t_sessionADT accept_client(t_master_sessionADT master_session);
 ** las procesa según su OPCODE */
 int attend(t_sessionADT se);
 
-// TODO: Interpreta los datos del thread ???
+/* Guarda dentro de session un puntero a void. Esto permite compartir
+** información a través de las distintas funciones del servidor. */
 void set_session_data(t_sessionADT session, void * se_data);
 
 #endif

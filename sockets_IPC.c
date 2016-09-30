@@ -18,7 +18,7 @@
 #define MAX_CONNECTIONS 1024
 #define DELIMITATOR ':'
 
-t_addressADT create_address_port(char * hostname, int port);
+t_addressADT create_address_port(const char * hostname, int port);
 
 struct t_address {
   int listen_fd; // solo se usa si pasó por un listen
@@ -46,7 +46,7 @@ void free_response(t_responseADT res) {
   free(res);
 }
 
-void set_response_msg(t_responseADT res, char *msg) {
+void set_response_msg(t_responseADT res, const char *msg) {
   strcpy(res->msg, msg);
 }
 
@@ -60,7 +60,7 @@ t_requestADT create_request() {
   return req;
 }
 
-void set_request_msg(t_requestADT req, char *msg) {
+void set_request_msg(t_requestADT req, const char *msg) {
   strcpy(req->msg, msg);
 }
 
@@ -89,7 +89,7 @@ void unaccept(t_connectionADT con) {
   free(con);
 }
 
-t_addressADT create_address(char * host) {
+t_addressADT create_address(const char * host) {
   char hostname[HOSTNAME_SIZE];
   char * occurrence;
   strcpy(hostname, host);
@@ -100,7 +100,7 @@ t_addressADT create_address(char * host) {
   return create_address_port(hostname, atoi(occurrence+1));
 }
 
-t_addressADT create_address_port(char * hostname, int port) {
+t_addressADT create_address_port(const char * hostname, int port) {
   struct hostent *he;
   struct sockaddr_in sockaddr;
   t_addressADT addr;

@@ -15,6 +15,8 @@
 #define FIFO_RESPONSE_PATH "/tmp/fifo_response_%d%lu"
 #define FIFO_LISTEN_PATH "/tmp/fifo_listen_%d%lu"
 
+#define FLAGS 0666
+
 static t_responseADT read_response(char * fifo);
 static int write_to_fifo(char * fifo, void * content, int size);
 static void * read_from_fifo(char * fifo, int size);
@@ -37,7 +39,7 @@ struct t_response{
   char msg[BUFSIZE];
 };
 
-t_addressADT create_address(char * path) {
+t_addressADT create_address(const char * path) {
   t_addressADT addr = malloc(sizeof(struct t_address));
   strcpy(addr->path, path);
   return addr;
@@ -65,7 +67,7 @@ t_connectionADT accept_peer(t_addressADT addr) {
   if (n < 1)
     return NULL;
 
-  mkfifo(buffer, 0666);
+  mkfifo(buffer, FLAGS);
   con = malloc(sizeof(struct t_connection));
   strcpy(con->path, buffer);
 
@@ -109,7 +111,7 @@ static void send_disconnect_signal(t_connectionADT con) {
 }
 
 int listen_peer(t_addressADT addr) {
-  if (mkfifo(addr->path, 0666) < 0)
+  if (mkfifo(addr->path, FLAGS) < 0)
     return -1;
   return 0;
 }
@@ -133,7 +135,7 @@ t_requestADT create_request() {
   sprintf(res_addr.path, FIFO_RESPONSE_PATH, getpid(), pthread_self());
   req->res_addr = res_addr;
 
-  if(mkfifo(res_addr.path, 0666) < 0)  // Crea fifo
+  if(mkfifo(res_addr.path, FLAGS) < 0)  // Crea fifo
     return NULL;
 
   return req;
@@ -144,11 +146,11 @@ void free_request(t_requestADT req) {
   free(req);
 }
 
-void set_request_msg(t_requestADT req, char *msg) {
+void set_request_msg(t_requestADT req, const char *msg) {
   strcpy(req->msg, msg);
 }
 
-void set_response_msg(t_responseADT res, char *msg) {
+void set_response_msg(t_responseADT res, const char *msg) {
   strcpy(res->msg, msg);
 }
 

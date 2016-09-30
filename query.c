@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include "include/query.h"
 
@@ -29,6 +28,6 @@ void query_like(char *buffer, int id) {
 	sprintf(buffer, Q_LIKE, id, id, id);
 }
 
-void query_insert(char *buffer, char *username, char *msg) {
+void query_insert(char *buffer, const char *username, const char *msg) {
 	sprintf(buffer, Q_INSERT, username, msg);
 }
