@@ -72,9 +72,8 @@ t_tweet * send_refresh(sessionADT se, int *size) {
     tws = realloc(tws, (MAX_TW_REFRESH + *size) * sizeof(*tws));
     sprintf(req_bytes, "%s%s%d%s", OPCODE_REFRESH, SEPARATOR, from_id, SEPARATOR);
 
-    if (send_op(se, req_bytes, res) == 0) {
+    if (send_op(se, req_bytes, res) == 0)
       return NULL;
-    }
 
     count = process_tweets(res, tws + *size);
     *size += count;
