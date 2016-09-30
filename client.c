@@ -26,7 +26,6 @@ static void handle_validity(int valid);
 static int readline_no_spaces(char *str, unsigned int maxlen);
 static int extract_cmd_name(char * cmd_name, const char * str);
 
-
 int main(int argc, char *argv[]) {
   char buffer[MAX_LEN];
   char cmd_name[MAX_LEN];

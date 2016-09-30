@@ -46,7 +46,8 @@ t_addressADT create_address(const char * path) {
 }
 
 void free_address(t_addressADT addr) {
-  free(addr);
+  if (addr != NULL)
+    free(addr);
 }
 
 // Recibe en buffer nombre de fifo a crear
@@ -96,13 +97,16 @@ t_connectionADT connect_peer(t_addressADT addr) {
 }
 
 void unaccept(t_connectionADT con) {
-  free(con);
+  IF (con != NULL)
+    free(con);
 }
 
 void disconnect(t_connectionADT con) {
-  send_disconnect_signal(con);
-  unlink(con->path);
-  free(con);
+  if (con != NULL) {
+    send_disconnect_signal(con);
+    unlink(con->path);
+    free(con);
+  }
 }
 
 static void send_disconnect_signal(t_connectionADT con) {
@@ -118,11 +122,13 @@ int listen_peer(t_addressADT addr) {
 
 // Cierra el file descriptor de la conexión y borra el fifo asociado.
 void unlisten_peer(t_addressADT addr) {
-  unlink(addr->path);
+  if (addr != NULL)
+    unlink(addr->path);
 }
 
 void free_response(t_responseADT res) {
-  free(res);
+  if (res != NULL)
+    free(res);
 }
 
 t_responseADT create_response() {
@@ -142,8 +148,10 @@ t_requestADT create_request() {
 }
 
 void free_request(t_requestADT req) {
-  unlink(req->res_addr.path);
-  free(req);
+  if (req != NULL) {
+    unlink(req->res_addr.path);
+    free(req);
+  }
 }
 
 void set_request_msg(t_requestADT req, const char *msg) {

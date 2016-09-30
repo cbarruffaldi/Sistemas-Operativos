@@ -43,7 +43,8 @@ t_responseADT create_response() {
 }
 
 void free_response(t_responseADT res) {
-  free(res);
+  if (res != NULL)
+    free(res);
 }
 
 void set_response_msg(t_responseADT res, const char *msg) {
@@ -81,12 +82,15 @@ t_responseADT send_request(t_connectionADT con, t_requestADT req) {
 }
 
 void free_request(t_requestADT req) {
-  free(req);
+  if (req != NULL)
+    free(req);
 }
 
 void unaccept(t_connectionADT con) {
-  close(con->fd);
-  free(con);
+  if (con != NULL) {
+    close(con->fd);
+    free(con);
+  }
 }
 
 t_addressADT create_address(const char * host) {
@@ -121,7 +125,8 @@ t_addressADT create_address_port(const char * hostname, int port) {
 }
 
 void free_address(t_addressADT addr) {
-  free(addr);
+  if (addr != NULL)
+    free(addr);
 }
 
 t_connectionADT accept_peer(t_addressADT addr) {
@@ -153,8 +158,10 @@ t_connectionADT connect_peer(t_addressADT addr) {
 }
 
 void disconnect(t_connectionADT con) {
-  close(con->fd);
-  free(con);
+  if (con != NULL) {
+    close(con->fd);
+    free(con);
+  }
 }
 
 int listen_peer(t_addressADT addr) {
@@ -170,7 +177,8 @@ int listen_peer(t_addressADT addr) {
 }
 
 void unlisten_peer(t_addressADT addr) {
-  close(addr->listen_fd);
+  if (addr != NULL)
+    close(addr->listen_fd);
 }
 
 t_requestADT read_request(t_connectionADT con) {

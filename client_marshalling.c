@@ -26,13 +26,15 @@ sessionADT start_session(char * path) {
   t_addressADT sv_addr = create_address(path);
   se->req = create_request();
   se->con = connect_peer(sv_addr);
-  return se;
+  return se->con == NULL ? NULL : se;
 }
 
 void end_session(sessionADT se) {
-  disconnect(se->con);
-  free_request(se->req);
-  free(se);
+  if (se != NULL) {
+    disconnect(se->con);
+    free_request(se->req);
+    free(se);
+  }
 }
 
 int send_tweet(sessionADT se, const char * msg) {

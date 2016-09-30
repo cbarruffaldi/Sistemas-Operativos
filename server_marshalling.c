@@ -13,7 +13,7 @@
 
 struct t_session {
   t_connectionADT con;
-  t_addressADT addr;
+  t_master_sessionADT master_se;
   void * data;
 };
 
@@ -78,9 +78,24 @@ t_sessionADT accept_client(t_master_sessionADT master_session) {
   se = malloc(sizeof(struct t_session));
 
   se->con = con;
-  se->addr = master_session->addr;
+  se->master_se = master_session;
 
   return se;
+}
+
+void end_session(t_sessionADT se) {
+  if (se != NULL) {
+    unaccept(se->con);
+    free(se);
+  }
+}
+
+void end_master_session(t_master_sessionADT master_se) {
+  if (master_se != NULL) {
+    unlisten_peer(master_se->addr);
+    free_address(master_se->addr);
+    free(master_se);
+  }
 }
 
 void set_session_data(t_sessionADT session, void * data) {

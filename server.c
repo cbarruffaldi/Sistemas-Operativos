@@ -67,12 +67,15 @@ int main(int argc, char *argv[])
 
   printf("SETTING UP MQ\n");
   if ((key = ftok("server.c", 'B')) == -1) {
-      perror("ftok");          exit(1);
+      perror("ftok");
+      exit(1);
   }
 
   if ((msq_id = msgget(key, 0644 | IPC_CREAT)) == -1) {
-      perror("msgget");          exit(1);
+      perror("msgget");
+      exit(1);
   }
+  
   send_mq(DATASE_CORRECT_NOTIFICATION,2); //TODO: cambiar el 2
 
 

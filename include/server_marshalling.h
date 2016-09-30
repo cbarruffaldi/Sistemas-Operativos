@@ -17,6 +17,9 @@ typedef struct t_master_session * t_master_sessionADT;
 ** dirección del servidor. */
 t_master_sessionADT setup_master_session(char *sv_path);
 
+/* Finaliza la sesión */
+void end_session(t_sessionADT se);
+
 /* Espera nuevas conecciones a master session, devuelve una sesión con
 ** la nueva conexión. */
 t_sessionADT accept_client(t_master_sessionADT master_session);
