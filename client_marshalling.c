@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define IS_END_TOKEN(s) (strcmp(s, END_TOKEN) == 0)
+
 struct session {
   t_connectionADT con;
   t_requestADT req;
@@ -19,7 +21,7 @@ struct session {
 
 static int send_op(sessionADT se, char * op_bytes, char res_bytes[BUFSIZE]);
 
-static int process_tweets(char res[], t_tweet tws[]);
+static int process_tweets(char res[], t_tweet * tws);
 
 sessionADT start_session(char * path) {
   sessionADT se = malloc(sizeof(struct session));
@@ -61,25 +63,36 @@ int send_like(sessionADT se, int tweet_id) {
   return atoi(res);
 }
 
-int send_refresh(sessionADT se, t_tweet tws[]) {
+int send_refresh(sessionADT se, t_tweet * tws) {
   char req_bytes[BUFSIZE], res[BUFSIZE];
+  int count = 0, size = 0;
+  int from_id = 0;
+  
+  do {
+    sprintf(req_bytes, "%s%s%d%s", OPCODE_REFRESH, SEPARATOR, from_id, SEPARATOR);
 
-  sprintf(req_bytes, "%s%s", OPCODE_REFRESH, SEPARATOR);
+    if (send_op(se, req_bytes, res) == 0) {
+      return -1;
+    }
 
-  if (send_op(se, req_bytes, res) == 0) {
-    return -1;
-  }
+    // Extrae los tweets de la respuesta.
+    size = process_tweets(res, tws + count);
+    count += size;
+    from_id = tws[count - 1].id + 1; // último id recibido
+  } while (size == MAX_TW_REFRESH);
 
-  return process_tweets(res, tws);
+  return count;
 }
 
-static int process_tweets(char res[], t_tweet tws[]) {
+static int process_tweets(char res[], t_tweet * tws) {
   char str[BUFSIZE]; // para proteger a res de las modificaciones que le hace strtok()
   int i = 0;
   strcpy(str, res);
 
   char * token = strtok(str, SEPARATOR);
   while (token != NULL) {
+
+    // Saca los atributos del tweet.
     tws[i].id = atoi(token);
     strcpy(tws[i].user, strtok(NULL, SEPARATOR));
     strcpy(tws[i].msg, strtok(NULL, SEPARATOR));

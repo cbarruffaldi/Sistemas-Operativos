@@ -1,9 +1,10 @@
 #ifndef _MARSHALLING_
 #define _MARSHALLING_
 
-#define MAX_TW_REFRESH 20
+#define MAX_TW_REFRESH 10
 
 #define SEPARATOR ":"
+#define END_TOKEN "**end**"
 
 #define OPCODE_TWEET "0"
 #define OPCODE_LIKE "1"

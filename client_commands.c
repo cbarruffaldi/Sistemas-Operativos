@@ -150,13 +150,16 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
 
 static int refresh(const char *args, sessionADT se, t_user *uinfo) {
 	int count;
-	t_tweet tws[MAX_TW_REFRESH]; // TODO: cantidad de tws que devuelve refresh
+	t_tweet * tws;
   if (!logged(uinfo))
     return NOT_LOGGED;
 
-	count = send_refresh(se, tws); // TODO: cantidad de tws a refreshear
-  printf("Received refresh %s\n", args);
+	tws = malloc(20000); // TODO: HACERLO BIEN!
+
+	count = send_refresh(se, tws);
+
 	print_tweets(tws, count);
+
 	return VALID;
 }
 
@@ -209,7 +212,7 @@ static void print_msg(char msg[]) {
   while (word != NULL) {
     int wlen = strlen(word);
     if (wlen + filled < COLUMNS - 4 || \
-      (filled > 0 && wlen > COLUMNS - 4)) { // la palabra no entra en un renglon entero.
+      (filled == 0 && wlen > COLUMNS - 4)) { // la palabra no entra en un renglon entero.
       printf("%s ", word);
       filled += (wlen + 1);
       word = strtok(NULL, " ");

@@ -153,6 +153,7 @@ void * attend(void * p) {
 
     param.values[param.n-1] = '\0';
 
+
     if (param.n > 0) {
       printf("[BD]: Hay %d fila%c\n", param.rows, param.rows == 1 ? '\0' : 's');
       printf("[BD]: %s\n", param.values);

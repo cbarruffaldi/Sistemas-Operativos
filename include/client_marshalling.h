@@ -1,6 +1,9 @@
 #ifndef _CLIENT_MARSHALLING_
 #define _CLIENT_MARSHALLING_
 
+#define REFRESHING 1
+#define ENDED 0
+
 #include "marshalling.h"
 
 typedef struct session * sessionADT;

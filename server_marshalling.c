@@ -128,8 +128,6 @@ void tweet(char * str, t_responseADT res, void * data) {
 
   sv_tweet(data, usr, msg);
 
-  //base de datos: Guardar el tweet
-
   //get last id from database
   sprintf(response, "%d", tw_id);
 
@@ -147,10 +145,9 @@ void like(char * msg, t_responseADT res, void * data) {
 }
 
 void refresh(char * msg, t_responseADT res, void * data) {
-  int num = atoi(msg);
+  int from_id = atoi(msg);
   char str[BUFSIZE];
-  t_tweet * tws = sv_refresh(data, 0, str); //TODO: algo
-  //TODO: deploy tws
+  t_tweet * tws = sv_refresh(data, from_id, str);
 
   set_response_msg(res, str); //lo que viene de DB lo manda directo por el tubo porque tiene bien los separadores.
 }
