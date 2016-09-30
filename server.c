@@ -141,7 +141,6 @@ void * run_thread(void * p) {
   pthread_exit(NULL);
 }
 
-<<<<<<< HEAD
 int sv_login(void * p, const char * username) {
   char * user = ((t_session_data *) p)->user;
 
@@ -177,7 +176,7 @@ int sv_tweet(void * p, const char * msg) {
   query_insert(buffer, username, msg);
   send_query(p, buffer, res);
 
-  sprintf(mq_msg,TWEET_NOTIFICATION,user,res,msg);
+  sprintf(mq_msg,TWEET_NOTIFICATION, username, res,msg);
   send_mq(mq_msg,2); //TODO: cambiar el 2
 
   return atoi(res);
@@ -239,8 +238,9 @@ void send_query(t_session_data * data, const char *sql, char result[]) {
 
 int logged(t_session_data * data) {
   return data->user[0] != '\0';
+}
 
-int send_mq(char * msg, int priority){
+int send_mq(char * msg, int priority) {
   queue_buffer * buf = malloc(sizeof(*buf));
   int len = strlen(msg);
   buf->mtype = priority;
