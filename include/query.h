@@ -3,7 +3,7 @@
 
 #include "database.h"
 
-#include TW_BLOCK_SIZE 10
+#define TW_BLOCK_SIZE 10
 
 /* Las funciones almacenan en buffer la query */
 
