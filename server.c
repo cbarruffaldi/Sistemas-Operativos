@@ -64,6 +64,11 @@ int main(int argc, char *argv[])
 
   master_session = setup_master_session(argv[1]);
 
+  if (master_session == NULL) {
+    printf("Cannot init session\n");
+    return 0;
+  }
+
 
   printf("SETTING UP MQ\n");
   if ((key = ftok("server.c", 'B')) == -1) {
@@ -82,9 +87,14 @@ int main(int argc, char *argv[])
   while (1) {
     printf("[SV]: Accepting...\n");
     session = accept_client(master_session);
-    printf("[SV]: ACCEPTED!\n");
-    send_mq(CLIENT_ACCEPTED,2); //TODO: VER LA PRIOIDAD (DEBE SER > 0 )
-    create_thread(argv[2], session);
+    if (session != NULL) {
+      printf("[SV]: ACCEPTED!\n");
+      send_mq(CLIENT_ACCEPTED,2); //TODO: VER LA PRIOIDAD (DEBE SER > 0 )
+      create_thread(argv[2], session);
+    }
+    else {
+      printf("[SV]: Couldn't open session\n");
+    }
   }
 }
 
