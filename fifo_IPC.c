@@ -97,7 +97,7 @@ t_connectionADT connect_peer(t_addressADT addr) {
 }
 
 void unaccept(t_connectionADT con) {
-  IF (con != NULL)
+  if (con != NULL)
     free(con);
 }
 
