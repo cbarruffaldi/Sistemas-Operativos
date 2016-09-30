@@ -13,7 +13,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <errno.h>
 
 #define HOSTNAME_SIZE 64
 #define MAX_CONNECTIONS 1024
@@ -154,6 +153,7 @@ t_connectionADT connect_peer(t_addressADT addr) {
 }
 
 void disconnect(t_connectionADT con) {
+  close(con->fd);
   free(con);
 }
 
@@ -169,9 +169,8 @@ int listen_peer(t_addressADT addr) {
   return 0;
 }
 
-// TODO: hacer bien, averiguar unbind()
 void unlisten_peer(t_addressADT addr) {
-  free(addr);
+  close(addr->listen_fd);
 }
 
 t_requestADT read_request(t_connectionADT con) {
@@ -194,6 +193,6 @@ int send_response(t_requestADT req, t_responseADT res) {
   if (send(req->res_fd, res, sizeof(struct t_response), 0) < 1)
     return -1;
 
-  free_request(req);
+  free(req);
   return 0;
 }

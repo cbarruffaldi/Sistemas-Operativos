@@ -147,5 +147,7 @@ void refresh(char * msg, t_responseADT res, void * data) {
   char str[BUFSIZE];
   t_tweet * tws = sv_refresh(data, from_id, str);
 
+  printf("[SV M]: Received from server: %s\n", str);
+
   set_response_msg(res, str); //lo que viene de DB lo manda directo por el tubo porque tiene bien los separadores.
 }
