@@ -1,9 +1,7 @@
-
 /*
 ** Estructura análogo al commands.c del TP de Arqui:
 ** https://github.com/cbarruffaldi/TPE-Arqui/blob/master/nanOS/Userland/SampleCodeModule/commands.c
 */
-
 
 #include "include/client_marshalling.h"
 #include "include/client.h"
@@ -17,7 +15,6 @@
 
 /* Cantidad de comandos */
 #define CMDS_SIZE (sizeof(commands)/sizeof(commands[0]))
-
 #define COLUMNS 60
 
 /* Estructura que representa un comando */
@@ -141,7 +138,7 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
   id = atoi(args);
   printf("Received valid like %d\n", id);
 
-	likes = send_like(se, id);  // Devuelve el número de likes del tweet pero no se usa.
+	likes = send_like(se, id);
 	// TODO: -1 si no existe el tweet
 	printf("That tweet ended up with %d like%c\n", likes, likes > 1 ? 's' : ' ');
 
@@ -159,11 +156,13 @@ static int refresh(const char *args, sessionADT se, t_user *uinfo) {
   if (!logged(uinfo))
     return NOT_LOGGED;
 
-	tws = malloc(20000); // TODO: HACERLO BIEN!
-	count = send_refresh(se, tws);
+	tws = send_refresh(se, &count);
+	if (tws != NULL)
+		print_tweets(tws, count);
+	else
+		printf("Received NULL tweet array\n");
 
-	print_tweets(tws, count);
-
+	free(tws);
 	return VALID;
 }
 

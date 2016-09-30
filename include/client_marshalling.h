@@ -26,6 +26,6 @@ int send_like(sessionADT se, int tweet_id);
 
 /* En * tws copia un arreglo con todos los tweets registrados en la Base de Datos.
 ** Devuelve la longuitud del arreglo copiado (la cantidad de tweets). */
-int send_refresh(sessionADT se, t_tweet * tws);
+t_tweet * send_refresh(sessionADT se, int *size);
 
 #endif

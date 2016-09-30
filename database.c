@@ -134,7 +134,9 @@ void * attend(void * p) {
     req = read_request(con);
 
     if (req == NULL) {
-      printf("[BD]: Failed to read request\n");
+      printf("[BD]: server disconnected\n");
+      free_response(res);
+      unaccept(con);
       pthread_exit(NULL);
     }
 
@@ -151,7 +153,7 @@ void * attend(void * p) {
     if (errmsg != NULL)
       printf("[BD]: exec error: %s\n", errmsg);
 
-    param.values[param.n-1] = '\0';
+    param.values[param.n - (param.n > 0)] = '\0';
     printf("LENGTH OF DB RESPONSE: %d\n", strlen(param.values));
     printf("PARAM VALUES: %s\n", param.values);
 

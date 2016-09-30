@@ -1,10 +1,11 @@
 #ifndef _MARSHALLING_
 #define _MARSHALLING_
 
+#include "IPC.h"
+
 #define MAX_TW_REFRESH 10
 
 #define SEPARATOR ":"
-#define END_TOKEN "**end**"
 
 #define OPCODE_TWEET "0"
 #define OPCODE_LIKE "1"
