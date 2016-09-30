@@ -103,11 +103,14 @@ static int login(const char *args, sessionADT se, t_user *uinfo) {
 static int tweet(const char *args, sessionADT se, t_user *uinfo) {
   if (!logged(uinfo))
     return NOT_LOGGED;
-
+	int ret;
   int len = strlen(args);
   if (len <= MSG_SIZE && len > 0) {
     printf("Received valid tweet: %s\n", args);
-	  send_tweet(se, uinfo->username, args); // TODO: retorna el ultimo id que tiene la bd. Si es mayor al que tiene el cliente, refresh.
+	  ret = send_tweet(se, uinfo->username, args);
+
+		printf("ret: %d\n", ret);
+		// TODO: usar para algo el valor de retorno
     return VALID;
   }
   else if (len == 0) {
@@ -121,7 +124,7 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo) {
 }
 
 static int like(const char *args, sessionADT se, t_user *uinfo) {
-  int id, valid;
+  int id, likes;
 
   if (!logged(uinfo))
     return NOT_LOGGED;
@@ -138,9 +141,11 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
   id = atoi(args);
   printf("Received valid like %d\n", id);
 
-	valid = send_like(se, id);  // Devuelve el número de likes del tweet pero no se usa.
+	likes = send_like(se, id);  // Devuelve el número de likes del tweet pero no se usa.
+	// TODO: -1 si no existe el tweet
+	printf("That tweet ended up with %d like%c\n", likes, likes > 1 ? 's' : ' ');
 
-	if (valid == -1) {
+	if (likes == -1) {
 		printf("No tweet with id %d\n", id);
 		return INVALID_ARGS;
 	}
@@ -155,7 +160,6 @@ static int refresh(const char *args, sessionADT se, t_user *uinfo) {
     return NOT_LOGGED;
 
 	tws = malloc(20000); // TODO: HACERLO BIEN!
-
 	count = send_refresh(se, tws);
 
 	print_tweets(tws, count);

@@ -152,7 +152,8 @@ void * attend(void * p) {
       printf("[BD]: exec error: %s\n", errmsg);
 
     param.values[param.n-1] = '\0';
-
+    printf("LENGTH OF DB RESPONSE: %d\n", strlen(param.values));
+    printf("PARAM VALUES: %s\n", param.values);
 
     if (param.n > 0) {
       printf("[BD]: Hay %d fila%c\n", param.rows, param.rows == 1 ? '\0' : 's');

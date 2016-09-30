@@ -8,7 +8,6 @@
 
 #define TABLE_TWEET "tweet"
 
-
 #define ATR_TWEET_ID "id"
 #define ATR_TWEET_USER "user"
 #define ATR_TWEET_MSG "msg"

@@ -114,7 +114,8 @@ int sv_tweet(void * p, char * user, char * msg) {
   printf("RECEIVED SV_TWEET_WITH \nuser:%s \nmsg:%s\n", user, msg);
   query_insert(buffer, user, msg);
   send_query(p, buffer, res);
-  return 27;
+
+  return atoi(res);
 }
 
 t_tweet * sv_refresh(void * p, int last_id, char res[]) {
@@ -131,7 +132,8 @@ int sv_like(void * p, int id) {
   printf("RECEIVED SV_LIKE WITH \nid:%d\n", id);
   query_like(buffer, id);
   send_query(p, buffer, res);
-  return 35;
+
+  return atoi(res);
 }
 
 void send_query(t_session_data * data, const char *sql, char result[]) {
