@@ -19,9 +19,6 @@ struct t_master_session {
   t_addressADT addr;
 };
 
-//cantidad de id's para los tweets
-int tw_id;
-
 t_tweet create_tweet(char * usr, char * msg);
 char * deploy_tweet (t_tweet twe);
 
@@ -122,14 +119,15 @@ void tweet(char * str, t_responseADT res, void * data) {
   char usr[USER_SIZE];
   char msg[MSG_SIZE];
   char * response = malloc(BUFSIZE);
+  int posted_id; //id del tweet enviado
 
   strcpy(usr, strtok(str, SEPARATOR));
   strcpy(msg, strtok(NULL, SEPARATOR));
 
-  sv_tweet(data, usr, msg);
+  posted_id = sv_tweet(data, usr, msg);
 
   //get last id from database
-  sprintf(response, "%d", tw_id);
+  sprintf(response, "%d", posted_id);
 
   set_response_msg(res, response);
 }
