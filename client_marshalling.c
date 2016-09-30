@@ -67,7 +67,7 @@ int send_refresh(sessionADT se, t_tweet * tws) {
   char req_bytes[BUFSIZE], res[BUFSIZE];
   int count = 0, size = 0;
   int from_id = 0;
-  
+
   do {
     sprintf(req_bytes, "%s%s%d%s", OPCODE_REFRESH, SEPARATOR, from_id, SEPARATOR);
 
@@ -79,7 +79,7 @@ int send_refresh(sessionADT se, t_tweet * tws) {
     size = process_tweets(res, tws + count);
     count += size;
     from_id = tws[count - 1].id + 1; // último id recibido
-  } while (size == MAX_TW_REFRESH);
+  } while (size == MAX_TW_REFRESH); // todavía quedan tweets en la base de datos
 
   return count;
 }

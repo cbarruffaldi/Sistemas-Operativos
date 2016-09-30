@@ -110,6 +110,7 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo) {
 	  ret = send_tweet(se, uinfo->username, args);
 
 		printf("ret: %d\n", ret);
+		refresh(args, se, uinfo);
 		// TODO: usar para algo el valor de retorno
     return VALID;
   }
