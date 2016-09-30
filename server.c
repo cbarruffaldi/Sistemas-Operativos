@@ -113,7 +113,7 @@ void * run_thread(void * p) {
 
   t_session_data se_data;
 
-  free(p);
+  free(p); // Ya se extrajeron los datos --> se libera
 
   printf("Thread created!\n");
 
@@ -131,7 +131,10 @@ void * run_thread(void * p) {
   else if (valid == -1) {
     printf("Failed to send response\n");
   }
-
+  
+  disconnect(con);
+  free_request(req);
+  free_address(addr);
   pthread_exit(NULL);
 }
 
@@ -149,15 +152,20 @@ int sv_tweet(void * p, char * user, char * msg) {
   return atoi(res);
 }
 
+//TODO: por ahora usa res para guardar la respuesta de la BD, debería devolver arreglo de t_tweet
 t_tweet * sv_refresh(void * p, int last_id, char res[]) {
   char buffer[BUFSIZE],mq_msg[MAX_NOTIFICATION];
   printf("RECEIVED SV_REFRESH WITH \nid:%d\n", last_id);
   query_refresh(buffer, last_id);
   send_query(p, buffer, res);
+<<<<<<< HEAD
 
   sprintf(mq_msg,REFRESH_NOTIFICATION);
   send_mq(mq_msg,2); //TODO: cambiar el 2
 
+=======
+  printf("Received from DB REFRESH: %s \n", res);
+>>>>>>> c7c4e9ac4570d6493d61582afcfaea1e07a0ea00
   return NULL;
 }
 
