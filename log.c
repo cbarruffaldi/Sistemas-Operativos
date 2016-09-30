@@ -12,6 +12,7 @@ typedef struct msgbuf {
     char mtext[MAX_NOTIFICATION];
 }t_msg;
 
+/* Idea de estructura : http://beej.us/guide/bgipc/output/html/multipage/mq.html */
 int main(void)
 {
     t_msg buf;
