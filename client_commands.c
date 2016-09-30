@@ -33,6 +33,8 @@ static int like(const char *args, sessionADT se, t_user *uinfo);
 static int refresh(const char *args, sessionADT se, t_user *uinfo);
 static int logout(const char *args, sessionADT se, t_user *uinfo);
 
+static void sanitize_msg(char msg[]);
+
 static int valid_like(const char *args);
 static char * fill(char c, int length);
 static void print_user(char usr[]);
@@ -101,17 +103,19 @@ static int login(const char *args, sessionADT se, t_user *uinfo) {
 static int tweet(const char *args, sessionADT se, t_user *uinfo) {
 	int ret;
   int len = strlen(args);
+	char tw_msg[MSG_SIZE];
 
   if (!logged(uinfo))
     return NOT_LOGGED;
 
   if (len <= MSG_SIZE && len > 0) {
-    printf("Received valid tweet: %s\n", args);
-	  ret = send_tweet(se, args);
+		strcpy(tw_msg, args);
+    printf("Received valid tweet: %s\n", tw_msg);
+		sanitize_msg(tw_msg);
 
-		printf("ret: %d\n", ret);
+	  send_tweet(se, tw_msg);
+
 		refresh(args, se, uinfo);
-		// TODO: usar para algo el valor de retorno
     return VALID;
   }
   else if (len == 0) {
@@ -122,6 +126,15 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo) {
   }
 
   return INVALID_ARGS;
+}
+
+static void sanitize_msg(char msg[]) {
+	char * aux;
+  int len = strlen(SEPARATOR);
+  char * spaces = fill(' ', len);
+	while ((aux = strstr(msg, SEPARATOR)) != NULL) {
+		memcpy(aux, spaces, len);
+	}
 }
 
 static int like(const char *args, sessionADT se, t_user *uinfo) {
