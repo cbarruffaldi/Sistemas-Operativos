@@ -5,3 +5,5 @@
 *.sys
 *.obj
 Info.plist
+*.dSYM
+twitter.db:
