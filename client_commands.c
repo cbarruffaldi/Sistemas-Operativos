@@ -61,7 +61,7 @@ static command commands[]= {{"help", help, "", "Displays commands and descriptio
 
 static int logged(t_user *uinfo);
 
-int execute(const char *name, const char *args, sessionADT se, t_user *user) {
+int run_command(const char *name, const char *args, sessionADT se, t_user *user) {
 	int i;
 	for (i = 0; i < CMDS_SIZE; i++) {
 		if (strcmp(name, commands[i].name) == 0)

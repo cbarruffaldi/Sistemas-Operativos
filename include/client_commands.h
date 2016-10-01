@@ -3,7 +3,7 @@
 
 #include "client.h"
 
-int execute(const char *name, const char *args, sessionADT se, t_user *user);
+int run_command(const char *name, const char *args, sessionADT se, t_user *user);
 
 #define VALID 1
 #define UNSUPPORTED 0

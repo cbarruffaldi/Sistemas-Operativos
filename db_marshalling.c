@@ -1,7 +1,7 @@
 //database_marshalling.c
 
 void * attend(void * p) {
-  char sql[BUFSIZE];
+  char req_str[BUFSIZE];
   char *errmsg;
   t_requestADT req;
   query_rows param;
@@ -18,23 +18,24 @@ void * attend(void * p) {
   while (1) {
     param.n = param.rows = 0;
 
-    printf("[BD]: Reading request\n");
+    printf("[BD M]: Reading request\n");
     req = read_request(con);
 
     if (req == NULL) {
-      printf("[BD]: server disconnected\n");
+      printf("[BD M]: server disconnected\n");
       free_response(res);
       unaccept(con);
       pthread_exit(NULL);
     }
 
-    get_request_msg(req, sql);
+    get_request_msg(req, req_str);
 
-    printf("[BD]: Received %s\n", sql);
+    printf("[BD M]: Received %s\n", req_str);
 
     /* Comienzo de zona crítica */
     pthread_mutex_lock(mutex);
-    sqlite3_exec(db, sql, callback, &param, &errmsg);
+    execute(req_str, res, param?);
+    // sqlite3_exec(db, sql, callback, &param, &errmsg);
     pthread_mutex_unlock(mutex);
     /* Fin zona crítica */
 

@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     if (buffer[0] != '\0') { // Se escribió algo
       name_len = extract_cmd_name(cmd_name, buffer);
       arguments_flag = buffer[name_len] != '\0';
-      valid = execute(cmd_name, buffer+name_len+arguments_flag, se, &user);
+      valid = run_command(cmd_name, buffer+name_len+arguments_flag, se, &user);
       handle_validity(valid);
     }
 

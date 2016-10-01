@@ -83,7 +83,7 @@ t_connectionADT connect_peer(t_addressADT addr) {
   if (fd < 0)
     return NULL;
 
-  sprintf(buffer, FIFO_LISTEN_PATH, getpid(), pthread_self());
+  sprintf(buffer, FIFO_LISTEN_PATH, getpid(), (unsigned long)pthread_self());
   n = write(fd, buffer, sizeof(buffer));
   close(fd);
 
@@ -138,7 +138,7 @@ t_responseADT create_response() {
 t_requestADT create_request() {
   struct t_address res_addr;
   t_requestADT req = malloc(sizeof(struct t_request));
-  sprintf(res_addr.path, FIFO_RESPONSE_PATH, getpid(), pthread_self());
+  sprintf(res_addr.path, FIFO_RESPONSE_PATH, getpid(), (unsigned long)pthread_self());
   req->res_addr = res_addr;
 
   if(mkfifo(res_addr.path, FLAGS) < 0)  // Crea fifo
