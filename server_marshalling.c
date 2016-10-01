@@ -23,7 +23,6 @@ struct t_master_session {
 };
 
 t_tweet create_tweet(char * usr, char * msg);
-char * deploy_tweet (t_tweet twe);
 
 int execute(char *args, t_responseADT res, void * data);
 
@@ -126,7 +125,6 @@ int attend(t_sessionADT se) {
 }
 
 int execute(char *request, t_responseADT res, void * data) {
-    int i;
     int opcode = atoi(request);
     char * start = strstr(request, SEPARATOR) + strlen(SEPARATOR);
 

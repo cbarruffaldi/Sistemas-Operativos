@@ -6,4 +6,4 @@
 *.obj
 Info.plist
 *.dSYM
-twitter.db:
+twitter.db

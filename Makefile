@@ -1,10 +1,10 @@
 
-#Agregar -Wall y -WExtra eventualmente
+#Agregar -Wall y -Wextra eventualmente
 
-FLAGS= -g
-CLIENT=client.c client_commands.c client_marshalling.c
+FLAGS= -g -Wall
+CLIENT=client.c client_commands.c marshalling.c client_marshalling.c
 CLIENT_BIN = client.bin
-SERVER=server.c server_marshalling.c query.c
+SERVER=server.c marshalling.c server_marshalling.c query.c
 SERVER_BIN=server.bin
 DATABASE=database.c
 DATABASE_BIN=database.bin

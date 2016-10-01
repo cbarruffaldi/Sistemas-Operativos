@@ -19,8 +19,6 @@ struct session {
 
 static int send_op(sessionADT se, char * op_bytes, char res_bytes[BUFSIZE]);
 
-static int process_tweets(char res[], t_tweet * tws);
-
 sessionADT start_session(char * path) {
   sessionADT se = malloc(sizeof(struct session));
   t_addressADT sv_addr = create_address(path);
@@ -76,7 +74,7 @@ t_tweet * send_refresh(sessionADT se, int *size) {
     if (send_op(se, req_bytes, res) == 0)
       return NULL;
 
-    count = process_tweets(res, tws + *size);
+    count = str_to_tweets(res, tws + *size);
     *size += count;
     from_id += MAX_TW_REFRESH;
   } while (count == MAX_TW_REFRESH);
@@ -118,31 +116,11 @@ t_tweet send_show (sessionADT se, int tweet_id) {
     return tw;
   }
 
-  process_tweets(res, &tw);
+  str_to_tweets(res, &tw);
 
   return tw;
 }
 
-static int process_tweets(char res[], t_tweet * tws) {
-  char str[BUFSIZE]; // para proteger a res de las modificaciones que le hace strtok()
-  int i = 0;
-  strcpy(str, res);
-
-  char * token = strtok(str, SEPARATOR);
-  while (token != NULL) {
-
-    // Saca los atributos del tweet.
-    tws[i].id = atoi(token);
-    strcpy(tws[i].user, strtok(NULL, SEPARATOR));
-    strcpy(tws[i].msg, strtok(NULL, SEPARATOR));
-    tws[i].likes = atoi(strtok(NULL, SEPARATOR));
-
-    token = strtok(NULL, SEPARATOR);
-    i++;
-  }
-
-  return i;
-}
 
 static int send_op(sessionADT se, char * op_bytes, char res_bytes[BUFSIZE]) {
   set_request_msg(se->req, op_bytes);

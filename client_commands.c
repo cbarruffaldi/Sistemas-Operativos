@@ -112,7 +112,6 @@ static int valid_username(const char *username) {
 }
 
 static int tweet(const char *args, sessionADT se, t_user *uinfo) {
-	int ret;
   int len = strlen(args);
 	char tw_msg[MSG_SIZE];
 

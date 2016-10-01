@@ -103,6 +103,8 @@ int setup_db(sqlite3 *db) {
   return 0;
 }
 
+//TODO: Repite código con el create_thread de server.c
+
 int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3 *db) {
   pthread_t thread;
   pthread_data * thdata = malloc(sizeof(*thdata));
@@ -154,7 +156,7 @@ void * attend(void * p) {
       printf("[BD]: exec error: %s\n", errmsg);
 
     param.values[param.n - (param.n > 0)] = '\0';
-    printf("LENGTH OF DB RESPONSE: %d\n", strlen(param.values));
+    printf("LENGTH OF DB RESPONSE: %lu\n", strlen(param.values));
     printf("PARAM VALUES: %s\n", param.values);
 
     if (param.n > 0) {
