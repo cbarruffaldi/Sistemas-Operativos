@@ -14,14 +14,13 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
+#include <sys/stat.h>
+#include <mqueue.h>
+
 #define ARG_COUNT 3
 #define DATABASE_PROCESS "database.bin"
 #define PATH_SIZE 64
 
-typedef struct {
-  long mtype;
-  char mtext[BUFSIZE];
-} queue_buffer;
 
 typedef struct {
   char db_path[PATH_SIZE];
@@ -42,9 +41,9 @@ void * run_thread(void * p);
 void print_session_data(t_session_data *data);
 int create_thread(char * db_path, t_sessionADT session);
 int logged(t_session_data * data);
-int send_mq(char * msg, int priority);
+void send_mq(char * msg, int priority);
 
-int msq_id; //id de la MQ
+mqd_t mq; //Para la MQ
 
 int main(int argc, char *argv[])
 {
@@ -62,38 +61,45 @@ int main(int argc, char *argv[])
       printf("FORK no se debería imprimir\n");
   }
 
+ /* open the mail queue */
+  mq = mq_open(QUEUE_NAME, O_WRONLY);
+  CHECK((mqd_t)-1 != mq);
+  
   master_session = setup_master_session(argv[1]);
 
   if (master_session == NULL) {
     printf("Cannot init session\n");
+    send_mq(CANNOT_INIT_SESSION,ERROR);
     return 0;
   }
 
-  printf("SETTING UP MQ\n");
-  if ((key = ftok("server.c", 'B')) == -1) {
-      perror("ftok");
-      exit(1);
-  }
+  send_mq(DATASE_CORRECT_NOTIFICATION,INFO); 
 
-  if ((msq_id = msgget(key, 0644 | IPC_CREAT)) == -1) {
-      perror("msgget");
-      exit(1);
-  }
-  
-  send_mq(DATASE_CORRECT_NOTIFICATION,2); //TODO: cambiar el 2
 
   while (1) {
     printf("[SV]: Accepting...\n");
     session = accept_client(master_session);
     if (session != NULL) {
       printf("[SV]: ACCEPTED!\n");
-      send_mq(CLIENT_ACCEPTED,2); //TODO: VER LA PRIOIDAD (DEBE SER > 0 )
+      send_mq(CLIENT_ACCEPTED,INFO); 
+   
       create_thread(argv[2], session);
     }
     else {
       printf("[SV]: Couldn't open session\n");
+      send_mq(CANNOT_OPEN_SESSION,ERROR);
     }
   }
+}
+
+void send_mq(char * msg, int priority) {
+  char buffer[MAX_NOTIFICATION]; //TODO: ver tamaño
+
+  strcpy(buffer, msg);
+
+  CHECK(0 <= mq_send(mq, buffer, MAX_NOTIFICATION, priority));
+
+
 }
 
 int create_thread(char * db_path, t_sessionADT session) {
@@ -116,6 +122,7 @@ void * run_thread(void * p) {
 
   if (addr == NULL) {
     printf("[SV]: Failed to create address\n");
+    send_mq(CANNOT_CREATE_ADDRESS,ERROR);
     pthread_exit(NULL);
   }
 
@@ -123,6 +130,7 @@ void * run_thread(void * p) {
 
   if (con == NULL) {
     printf("[SV]: Failed to connect to DB\n");
+    send_mq(CANNOT_CONNECT_DB,ERROR);
     pthread_exit(NULL);
   }
 
@@ -142,10 +150,11 @@ void * run_thread(void * p) {
 
   if (valid == 0) {
     printf("Client disconnected\n");
-    send_mq(CLIENT_DISCONNECTED,2);
+    send_mq(CLIENT_DISCONNECTED,INFO);
   }
   else if (valid == -1) {
     printf("Failed to send response\n");
+    send_mq(CANNOT_SEND_RESPONSE,WARNING);
   }
 
   disconnect(con);
@@ -157,12 +166,16 @@ void * run_thread(void * p) {
 
 int sv_login(void * p, const char * username) {
   char * user = ((t_session_data *) p)->user;
-
+  char mq_msg[MAX_NOTIFICATION];
   printf("[SV]: RECEIVED SV_LOGIN from %s\n", username);
 
   if (!logged(p) && strlen(username) < USER_SIZE) {
     printf("[SV]: User logged in as %s\n", username);
     strcpy(user, username);
+
+    sprintf(mq_msg,LOGIN_NOTIFICATION,user);
+    send_mq(mq_msg,INFO);
+
     return 1;
   }
 
@@ -170,11 +183,17 @@ int sv_login(void * p, const char * username) {
 }
 
 int sv_logout(void * p) {
+  char mq_msg[MAX_NOTIFICATION];
   char *user = ((t_session_data *) p)->user;
   if (!logged(p))
     return 0;
   printf("User %s logged out\n", user);
+  
+  sprintf(mq_msg,LOGOUT_NOTIFICATION,user);
+  send_mq(mq_msg,INFO);
+
   user[0] = '\0';
+
   return 1;
 }
 
@@ -191,7 +210,7 @@ int sv_tweet(void * p, const char * msg) {
   send_query(p, buffer, res);
 
   sprintf(mq_msg,TWEET_NOTIFICATION, username, res,msg);
-  send_mq(mq_msg,2); //TODO: cambiar el 2
+  send_mq(mq_msg,INFO); //TODO: cambiar el 2
 
   return atoi(res);
 }
@@ -209,9 +228,6 @@ t_tweet * sv_refresh(void * p, int last_id, char res[]) {
   query_refresh(buffer, last_id);
   send_query(p, buffer, res);
 
-  sprintf(mq_msg,REFRESH_NOTIFICATION);
-  send_mq(mq_msg,2); //TODO: cambiar el 2
-
   printf("Received from DB REFRESH: %s \n", res);
 
   return NULL;
@@ -222,8 +238,6 @@ int sv_like(void * p, int id) {
   char mq_msg[MAX_NOTIFICATION];
   printf("RECEIVED SV_LIKE WITH \nid:%d\n", id);
 
-  sprintf(mq_msg,LIKE_NOTIFICATION,id);
-  send_mq(mq_msg,2); //TODO:cambiar el 2
 
   if (!logged(p))
     return -1;
@@ -231,18 +245,21 @@ int sv_like(void * p, int id) {
   query_like(buffer, id);
   send_query(p, buffer, res);
 
+  sprintf(mq_msg,LIKE_NOTIFICATION,id);
+  send_mq(mq_msg,INFO);
+
   return atoi(res);
 }
 
 // TODO: por ahora recibe res y devuelve void; en realidad deberia devolver un tweet
 void sv_show(void * p, int id, char res[]) {
-  char sql[QUERY_SIZE], mq_msg[MAX_NOTIFICATION];
-
-  sprintf(mq_msg,SHOW_NOTIFICATION,id);
-  send_mq(mq_msg,2); //TODO:cambiar el 2
+  char sql[QUERY_SIZE], mq_msg[MAX_NOTIFICATION]; 
 
   query_show(sql, id);
   send_query(p, sql, res);
+
+  sprintf(mq_msg,SHOW_NOTIFICATION,id);
+  send_mq(mq_msg,INFO);
 }
 
 void send_query(t_session_data * data, const char *sql, char result[]) {
@@ -254,6 +271,7 @@ void send_query(t_session_data * data, const char *sql, char result[]) {
   res = send_request(con, req);
   if (res == NULL) {
     printf("[SV]: Error on database response\n");
+    send_mq(ERROR_DB_RESPONSE,WARNING);
     return;
   }
 
@@ -263,19 +281,4 @@ void send_query(t_session_data * data, const char *sql, char result[]) {
 
 int logged(t_session_data * data) {
   return data->user[0] != '\0';
-}
-
-int send_mq(char * msg, int priority) {
-  queue_buffer * buf = malloc(sizeof(*buf));
-  int len = strlen(msg);
-  buf->mtype = priority;
-
-  strcpy(buf->mtext, msg);
-  if (msgsnd(msq_id, buf, len+1, 0) == -1) {
-      perror("ERROR ON MSGSND...");
-      free(buf);
-      return 1;
-  }
-  free(buf);
-  return 0;
 }
