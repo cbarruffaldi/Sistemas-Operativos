@@ -26,6 +26,7 @@ sessionADT start_session(char * path) {
   t_addressADT sv_addr = create_address(path);
   se->req = create_request();
   se->con = connect_peer(sv_addr);
+  free_address(sv_addr);
   return se->con == NULL ? NULL : se;
 }
 

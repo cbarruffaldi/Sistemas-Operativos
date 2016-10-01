@@ -21,7 +21,7 @@
 typedef struct {
   long mtype;
   char mtext[BUFSIZE];
-}queue_buffer;
+} queue_buffer;
 
 typedef struct {
   char db_path[PATH_SIZE];
@@ -69,7 +69,6 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-
   printf("SETTING UP MQ\n");
   if ((key = ftok("server.c", 'B')) == -1) {
       perror("ftok");
@@ -82,7 +81,6 @@ int main(int argc, char *argv[])
   }
   
   send_mq(DATASE_CORRECT_NOTIFICATION,2); //TODO: cambiar el 2
-
 
   while (1) {
     printf("[SV]: Accepting...\n");
@@ -113,6 +111,8 @@ void * run_thread(void * p) {
   t_requestADT req = create_request();
   t_addressADT addr = create_address(thdata->db_path);
   t_connectionADT con;
+
+  pthread_detach(pthread_self());
 
   if (addr == NULL) {
     printf("[SV]: Failed to create address\n");
@@ -151,6 +151,7 @@ void * run_thread(void * p) {
   disconnect(con);
   free_request(req);
   free_address(addr);
+  end_session(session);
   pthread_exit(NULL);
 }
 

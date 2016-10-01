@@ -14,6 +14,7 @@
 struct t_session {
   t_connectionADT con;
   t_master_sessionADT master_se;
+  t_responseADT res;
   void * data;
 };
 
@@ -80,12 +81,14 @@ t_sessionADT accept_client(t_master_sessionADT master_session) {
 
   se->con = con;
   se->master_se = master_session;
+  se->res = create_response();
 
   return se;
 }
 
 void end_session(t_sessionADT se) {
   if (se != NULL) {
+    free_response(se->res);
     unaccept(se->con);
     free(se);
   }
@@ -107,7 +110,6 @@ int attend(t_sessionADT se) {
   char buffer[BUFSIZE];
   int valid;
   t_connectionADT con = se->con;
-  t_responseADT res = create_response();
   t_requestADT req;
 
   while(1) {
@@ -115,10 +117,10 @@ int attend(t_sessionADT se) {
     if (req == NULL)
       return 0;
     get_request_msg(req, buffer);
-    valid = execute(buffer, res, se->data);
+    valid = execute(buffer, se->res, se->data);
     if (!valid)
-      set_response_msg(res, INVALID_MSG);
-    if (send_response(req, res) < 0)
+      set_response_msg(se->res, INVALID_MSG);
+    if (send_response(req, se->res) < 0)
       return -1;
   }
 }

@@ -146,6 +146,7 @@ static void sanitize_msg(char msg[]) {
 	while ((aux = strstr(msg, SEPARATOR)) != NULL) {
 		memcpy(aux, spaces, len);
 	}
+  free(spaces);
 }
 
 static int like(const char *args, sessionADT se, t_user *uinfo) {
@@ -238,18 +239,24 @@ static void print_tweets(t_tweet * tws, int count) {
 }
 
 static void print_tweet(t_tweet tw) {
+  char * spaces = fill(' ', COLUMNS - 27);
   print_user(tw.user);
   print_msg(tw.msg);
-  printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, fill(' ', COLUMNS - 27)); // TODO: Hacer funcioncita
+  printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, spaces); // TODO: Hacer funcioncita
   print_border();
+  free(spaces);
 }
 
 static void print_border() {
-  printf(" %s\n", fill('-', COLUMNS - 2));
+  char * border = fill('-', COLUMNS - 2);
+  printf(" %s\n", border);
+  free(border);
 }
 
 static void print_user(char usr[]) {
-  printf("| %s:%s|\n", usr, fill(' ', COLUMNS - strlen(usr) - 4));
+  char * spaces = fill(' ', COLUMNS - strlen(usr) - 4);
+  printf("| %s:%s|\n", usr, spaces);
+  free(spaces);
 }
 
 static void print_msg(char msg[]) {
@@ -280,14 +287,16 @@ static void start_line() {
 
 static void close_line(int filled) {
   int c = COLUMNS - filled - 3;
+  char * spaces = fill(' ', c);
   c = (c >= 0) ? c : 0;
-	printf("%s|\n", fill(' ', c));
+	printf("%s|\n", spaces);
+  free(spaces);
 }
 
 static char * fill(char c, int length) {
   char * arr = malloc(length + 1);
-  int i = 0;
-  for (;i < length; i++) {
+  int i;
+  for (i = 0; i < length; i++) {
     arr[i] = c;
   }
   arr[i] = '\0';
