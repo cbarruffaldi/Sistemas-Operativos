@@ -32,10 +32,13 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo);
 static int like(const char *args, sessionADT se, t_user *uinfo);
 static int refresh(const char *args, sessionADT se, t_user *uinfo);
 static int logout(const char *args, sessionADT se, t_user *uinfo);
+static int show(const char *args, sessionADT se, t_user *uinfo);
+
 
 static void sanitize_msg(char msg[]);
+static int valid_id(const char *args);
+static int valid_username(const char *username);
 
-static int valid_like(const char *args);
 static char * fill(char c, int length);
 static void print_user(char usr[]);
 static void print_msg(char msg[]);
@@ -53,6 +56,7 @@ static command commands[]= {{"help", help, "", "Displays commands and descriptio
               {"like", like, "[tweet_id]", "Likes a tweet."},
               {"refresh", refresh, "", "Prints most recent tweets."},
               {"logout", logout, "", "Logs out."},
+              {"show", show, "[tweet_id]", "Prints tweet with tweet_id."}
               };
 
 static int logged(t_user *uinfo);
@@ -84,7 +88,7 @@ static int login(const char *args, sessionADT se, t_user *uinfo) {
     return ALREADY_LOGGED;
   }
 
-  if (len <= USER_SIZE && len > 0) {
+  if (len < USER_SIZE && len > 0 && valid_username(args)) {
     strcpy(uinfo->username, args);
     uinfo->twit_id = 0;
 		send_login(se, args);
@@ -93,11 +97,18 @@ static int login(const char *args, sessionADT se, t_user *uinfo) {
   else if (len == 0) {
     printf("You must provide a username.\n");
   }
-  else {
+  else if (len >= USER_SIZE) {
     printf("Username too long.\n");
+  }
+  else {
+    printf("Invalid username.\n");
   }
 
   return INVALID_ARGS;
+}
+
+static int valid_username(const char *username) {
+  return !isdigit(username[0]) && strstr(username, SEPARATOR) == NULL;
 }
 
 static int tweet(const char *args, sessionADT se, t_user *uinfo) {
@@ -147,7 +158,7 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
     printf("Need tweet id in order to like it\n");
     return INVALID_ARGS;
   }
-  if (!valid_like(args)) {
+  if (!valid_id(args)) {
     printf("Invalid tweet id\n");
     return INVALID_ARGS;
   }
@@ -191,11 +202,26 @@ static int logout(const char *args, sessionADT se, t_user *uinfo) {
   return VALID;
 }
 
+static int show(const char *args, sessionADT se, t_user *uinfo) {
+  if (!logged(uinfo))
+    return NOT_LOGGED;
+  if (!valid_id(args))
+    return INVALID_ARGS;
+
+  t_tweet tw = send_show(se, atoi(args));
+  if (tw.id == -1) {
+    printf("Invalid id\n");
+    return INVALID_ARGS;
+  }
+  print_tweets(&tw, 1);
+  return VALID;
+}
+
 static int logged(t_user *uinfo) {
   return uinfo->username[0] != '\0';
 }
 
-static int valid_like(const char *args) {
+static int valid_id(const char *args) {
   int i;
   for (i = 0; args[i] != '\0'; i++)
     if (!isdigit(args[i]))

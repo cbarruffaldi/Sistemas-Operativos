@@ -6,5 +6,6 @@ t_tweet * sv_refresh(void * p, int last_id, char res[]);
 int sv_like(void * p, int id);
 int sv_login(void * p, const char * username);
 int sv_logout(void * p);
+void sv_show(void * p, int id, char res[]);
 
 #endif

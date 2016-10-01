@@ -221,16 +221,27 @@ int sv_like(void * p, int id) {
   char mq_msg[MAX_NOTIFICATION];
   printf("RECEIVED SV_LIKE WITH \nid:%d\n", id);
 
+  sprintf(mq_msg,LIKE_NOTIFICATION,id);
+  send_mq(mq_msg,2); //TODO:cambiar el 2
+
   if (!logged(p))
     return -1;
 
   query_like(buffer, id);
   send_query(p, buffer, res);
 
-  sprintf(mq_msg,LIKE_NOTIFICATION,id);
+  return atoi(res);
+}
+
+// TODO: por ahora recibe res y devuelve void; en realidad deberia devolver un tweet
+void sv_show(void * p, int id, char res[]) {
+  char sql[QUERY_SIZE], mq_msg[MAX_NOTIFICATION];
+
+  sprintf(mq_msg,SHOW_NOTIFICATION,id);
   send_mq(mq_msg,2); //TODO:cambiar el 2
 
-  return atoi(res);
+  query_show(sql, id);
+  send_query(p, sql, res);
 }
 
 void send_query(t_session_data * data, const char *sql, char result[]) {
@@ -261,7 +272,6 @@ int send_mq(char * msg, int priority) {
   strcpy(buf->mtext, msg);
   if (msgsnd(msq_id, buf, len+1, 0) == -1) {
       perror("ERROR ON MSGSND...");
-      printf ("%d, %d, %s, %d\n", msq_id, buf->mtype, buf->mtext, len);
       free(buf);
       return 1;
   }

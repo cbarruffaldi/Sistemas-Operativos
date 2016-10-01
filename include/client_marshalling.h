@@ -35,4 +35,7 @@ int send_login (sessionADT se, const char *username);
 /* Desloguea al usuario. */
 int send_logout (sessionADT se);
 
+/* Imprime un tweet dado un id */
+t_tweet send_show(sessionADT se, int tweet_id);
+
 #endif

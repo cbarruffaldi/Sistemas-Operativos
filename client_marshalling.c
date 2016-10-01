@@ -62,7 +62,7 @@ int send_like(sessionADT se, int tweet_id) {
 }
 
 t_tweet * send_refresh(sessionADT se, int *size) {
-  char req_bytes[BUFSIZE], res[BUFSIZE];
+  char req_bytes[SHORTBUF], res[BUFSIZE]; // Debe ser BUFSIZE porque agarra muchos tweets
   int count, from_id;
   t_tweet * tws = malloc(MAX_TW_REFRESH);
 
@@ -103,6 +103,23 @@ int send_logout (sessionADT se) {
   }
 
   return 1;
+}
+
+t_tweet send_show (sessionADT se, int tweet_id) {
+  char req_bytes[SHORTBUF], res[SHORTBUF];
+  t_tweet tw;
+
+  tw.id = -1; // sirve como flag de error para el cliente
+
+  sprintf(req_bytes, "%s%s%d", OPCODE_SHOW, SEPARATOR, tweet_id);
+
+  if (send_op(se, req_bytes, res) == 0) {
+    return tw;
+  }
+
+  process_tweets(res, &tw);
+
+  return tw;
 }
 
 static int process_tweets(char res[], t_tweet * tws) {

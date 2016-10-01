@@ -31,6 +31,7 @@ int like(char * msg, t_responseADT res, void * data);
 int refresh(char * msg, t_responseADT res, void * data);
 int login(char * msg, t_responseADT res, void * data);
 int logout(char * msg, t_responseADT res, void * data);
+int show(char * msg, t_responseADT res, void * data);
 
 /*
 ** Cada función decodifica msg, llama a la función del servidor y settea en
@@ -38,7 +39,7 @@ int logout(char * msg, t_responseADT res, void * data);
 */
 typedef int (*command) (char* msg, t_responseADT res, void * data);
 
-static command commands[]= {tweet, like, refresh, login, logout};
+static command commands[]= {tweet, like, refresh, login, logout, show};
 
 t_master_sessionADT setup_master_session(char *sv_path) {
 
@@ -187,4 +188,12 @@ int logout(char * msg, t_responseADT res, void * data) {
   if (valid)
     set_response_msg(res, "");
   return valid;
+}
+
+//TODO: que el servidor devuelva un tweet y este marshaller lo codifique para enviar
+int show(char * msg, t_responseADT res, void * data) {
+  char str[SHORTBUF];
+  sv_show(data, atoi(msg), str);
+  set_response_msg(res, str);
+  return 1;
 }
