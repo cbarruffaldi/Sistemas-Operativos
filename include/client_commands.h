@@ -3,6 +3,9 @@
 
 #include "client.h"
 
+/** Ejecuta el comando correspondiente al nombre name con los args como parámetros
+** de dicho comando. En caso de ser necesario, envía una request usando la sesión
+** y la información de usuario dada */
 int run_command(const char *name, const char *args, sessionADT se, t_user *user);
 
 #define VALID 1

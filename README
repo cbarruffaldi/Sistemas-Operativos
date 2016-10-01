@@ -1,27 +1,25 @@
 FIFO
 
 1- Hacer make fifo.
-2- Ejecutar server pasando como argumento nombre de fifo donde escuchará (por ej ./server.bin servidor).
+2- Ejecutar server pasando como argumento los nombres dos fifos, uno por donde
+escuchará y otro por donde se comunicará con la base de datos (por ej ./server.bin servidor).
 3- Ejecutar n clients en otras terminales pasando como argumento fifo del servidor (por ej ./client.bin servidor).
 4- Escribir input en terminales de client.
 
 SOCKETS
 
 1- Hacer make sockets.
-2- Ejecutar server pasando como argumento nombre del "hostname:port" de la máquina donde se correrá el server.
-   Para averiguar el hostname hacer "echo $HOSTNAME".
-3- Ejecutar n clients con ese mismo hostname.
+2- Ejecutar server pasando como argumentos "hostname:(server_port)" y "hostname:(db_port)"
+de la máquina donde se correrá el server. Para averiguar el hostname ejecutar "hostname" en la terminal.
+3- Ejecutar n clients con ese mismo hostname y server_port.
 4- Escribir input en terminales de client.
 
 PARA CORRER EN PAMPERO LOS SOCKETS
 
 1- Conectarse desde ssh a pampero (ssh nombre_de_usuario@pampero.itba.edu.ar) o estar en una de las compus del lab.
-2- Ejecutar "./server.bin pampero" dentro de pampero.
-3- Ejecutar "./client.bin pampero.itba.edu.ar" desde una compu no conectada a pampero.
+2- Ejecutar "./server.bin pampero:(sv_port)" dentro de pampero.
+3- Ejecutar "./client.bin pampero.itba.edu.ar:(sv_port)" desde una compu no conectada a pampero.
 4- Escribir input.
 
 
-Escribiendo "leave" se cierra el cliente.
-Escribiendo "shutdown" se apaga el server.
-Escribiendo "lock" no se leerá lo que los demás clientes escriban.
-Escribiendo "unlock" se anula lo de arriba.
+Escribiendo "help" en el cliente se obtiene un menú de funciones disponibles.
