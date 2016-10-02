@@ -137,7 +137,10 @@ static void handle_validity(int valid) {
   }
 }
 
-static void print_welcome(){
+/*
+** Imprime el mensaje de bienvenida para el cliente
+*/
+static void print_welcome() {
   printf("\t\t\t  _____          _ _   _            \n");
   printf("\t\t\t |_   _|_      _(_) |_| |_ ___ _ __ \n");
   printf("\t\t\t   | | \\ \\ /\\ / / | __| __/ _ \\ '__|\n");
@@ -145,5 +148,4 @@ static void print_welcome(){
   printf("\t\t\t   |_|   \\_/\\_/ |_|\\__|\\__\\___|_|   \n\n");
   printf("\t\t\t\t\t\t\t*For help enter 'help'\n");
   printf("Please Log In:\n");
-
 }

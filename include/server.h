@@ -8,14 +8,19 @@ int sv_tweet(void * p, const char * msg);
 ** Devuelve la cantidad de elementos en el arreglo */
 int sv_refresh(void * p, int from_id, t_tweet tws[]);
 
+/* Envia la accion de 'like' junto con el id del tweet a la base de datos */
 int sv_like(void * p, int id);
 
+/*Login de un usuario*/
 int sv_login(void * p, const char * username);
 
+/*Logout de un usuario */
 int sv_logout(void * p);
 
+/* Devuelve un tweet especifico a mostrar */
 t_tweet sv_show(void * p, int id);
 
+/*ELimina un tweet */
 int sv_delete(void * p, int id);
 
 #endif

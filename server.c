@@ -208,32 +208,41 @@ int sv_refresh(void * p, int from_id, t_tweet tws[]) {
 int sv_like(void * p, int id) {
   char mq_msg[MAX_NOTIFICATION];
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
+  int valid;
 
   printf("RECEIVED SV_LIKE WITH \nid:%d\n", id);
 
   if (!logged(p))
     return -1;
 
-  sprintf(mq_msg,LIKE_NOTIFICATION,id);
-  send_mq(mq_msg,INFO);
+  valid = send_like(db_se, id);
 
-  return send_like(db_se, id);
+  if(valid != -1) {
+    sprintf(mq_msg,LIKE_NOTIFICATION,id);
+    send_mq(mq_msg,INFO);
+  }
+
+  return valid; 
 }
 
 int sv_delete(void * p, int id) {
   char mq_msg[MAX_NOTIFICATION];
   char *username = ((t_session_data *) p)->user; // solo puede borrar los tweets de su mismo usuario
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
+  int valid;
 
   printf("RECEIVED SV_DELETE WITH \nid:%d\n", id);
 
   if (!logged(p))
     return -1;
 
-  sprintf(mq_msg, DELETE_NOTIFICATION, id, username);
-  send_mq(mq_msg, INFO);
+  valid = send_delete(db_se, username, id);
+  if (valid != -1) {
+    sprintf(mq_msg, DELETE_NOTIFICATION, id, username);
+    send_mq(mq_msg, INFO);
+  }
 
-  return send_delete(db_se, username, id);
+  return valid; 
 }
 
 t_tweet sv_show(void * p, int id) {
