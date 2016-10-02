@@ -167,13 +167,13 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
   printf("Received valid like %d\n", id);
 
 	likes = send_like(se, id);
-	// TODO: -1 si no existe el tweet
-	printf("That tweet ended up with %d like%c\n", likes, likes > 1 ? 's' : ' ');
 
 	if (likes == -1) {
 		printf("No tweet with id %d\n", id);
 		return INVALID_ARGS;
 	}
+
+  printf("That tweet ended up with %d like%c\n", likes, likes > 1 ? 's' : ' ');
 
   return VALID;
 }
@@ -209,7 +209,7 @@ static int show(const char *args, sessionADT se, t_user *uinfo) {
     return INVALID_ARGS;
 
   t_tweet tw = send_show(se, atoi(args));
-  if (tw.id == -1) {
+  if (tw.msg[0] == '\0') {
     printf("Invalid id\n");
     return INVALID_ARGS;
   }

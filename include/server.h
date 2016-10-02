@@ -2,10 +2,18 @@
 #define _SERVER_H_
 
 int sv_tweet(void * p, const char * msg);
-t_tweet * sv_refresh(void * p, int last_id, char res[]);
+
+/* Coloca en el arreglo de tweets los tweets que van del id
+** from_id hasta from_id+MAX_TW_REFRESH-1
+** Devuelve la cantidad de elementos en el arreglo */
+int sv_refresh(void * p, int from_id, t_tweet tws[]);
+
 int sv_like(void * p, int id);
+
 int sv_login(void * p, const char * username);
+
 int sv_logout(void * p);
-void sv_show(void * p, int id, char res[]);
+
+t_tweet sv_show(void * p, int id);
 
 #endif

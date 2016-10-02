@@ -85,7 +85,7 @@ t_sessionADT accept_client(t_master_sessionADT master_session) {
   return se;
 }
 
-void end_session(t_sessionADT se) {
+void unaccept_client(t_sessionADT se) {
   if (se != NULL) {
     free_response(se->res);
     unaccept(se->con);
@@ -156,23 +156,40 @@ int like(char * msg, t_responseADT res, void * data) {
 
   int likes = sv_like(data, id);
 
-  if (likes == -1)
-    return 0;
-
   sprintf(str, "%d", likes);
   set_response_msg(res, str);
   return 1;
 }
 
-// TODO: agregar return 0 si arreglo de tweets es NULl
 int refresh(char * msg, t_responseADT res, void * data) {
-  int from_id = atoi(msg);
+  int n, from_id;
   char str[BUFSIZE];
-  t_tweet * tws = sv_refresh(data, from_id, str);
+  t_tweet tws[MAX_TW_REFRESH];
 
+  from_id = atoi(msg);
+  n = sv_refresh(data, from_id, tws);
+
+  if (n == -1)
+    return 0;
+
+  tweets_to_str(str, tws, n);
   printf("[SV M]: Received from server: %s\n", str);
-  set_response_msg(res, str); //lo que viene de DB lo manda directo por el tubo porque tiene bien los separadores.
 
+  set_response_msg(res, str);
+
+  return 1;
+}
+
+int show(char * msg, t_responseADT res, void * data) {
+  char str[SHORTBUF];
+  t_tweet tw = sv_show(data, atoi(msg));
+
+  str[0] = '\0';
+
+  if (tw.msg[0] != '\0')
+    tweets_to_str(str, &tw, 1);
+
+  set_response_msg(res, str);
   return 1;
 }
 
@@ -190,10 +207,3 @@ int logout(char * msg, t_responseADT res, void * data) {
   return valid;
 }
 
-//TODO: que el servidor devuelva un tweet y este marshaller lo codifique para enviar
-int show(char * msg, t_responseADT res, void * data) {
-  char str[SHORTBUF];
-  sv_show(data, atoi(msg), str);
-  set_response_msg(res, str);
-  return 1;
-}

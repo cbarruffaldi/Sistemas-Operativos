@@ -108,7 +108,7 @@ t_tweet send_show (sessionADT se, int tweet_id) {
   char req_bytes[SHORTBUF], res[SHORTBUF];
   t_tweet tw;
 
-  tw.id = -1; // sirve como flag de error para el cliente
+  tw.msg[0] = '\0'; // sirve como flag de error para el cliente
 
   sprintf(req_bytes, "%s%s%d", OPCODE_SHOW, SEPARATOR, tweet_id);
 
@@ -123,8 +123,9 @@ t_tweet send_show (sessionADT se, int tweet_id) {
 
 
 static int send_op(sessionADT se, char * op_bytes, char res_bytes[BUFSIZE]) {
+  t_responseADT res;
   set_request_msg(se->req, op_bytes);
-  t_responseADT res = send_request(se->con, se->req);
+  res = send_request(se->con, se->req);
   if (res != NULL)
     get_response_msg(res, res_bytes);
   return res != NULL;

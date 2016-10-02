@@ -4,7 +4,7 @@
 FLAGS= -g -Wall
 CLIENT=client.c client_commands.c marshalling.c client_marshalling.c
 CLIENT_BIN = client.bin
-SERVER=server.c marshalling.c server_marshalling.c query.c
+SERVER=server.c marshalling.c server_marshalling.c query.c db_marshalling.c
 SERVER_BIN=server.bin
 DATABASE=database.c
 DATABASE_BIN=database.bin

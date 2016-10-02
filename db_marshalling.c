@@ -1,86 +1,91 @@
 //database_marshalling.c
 
-void * attend(void * p) {
-  char req_str[BUFSIZE];
-  char *errmsg;
+#include "include/db_marshalling.h"
+#include "include/query.h"
+
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
+static int send_query(t_DBsessionADT se, const char *query, char response[]);
+
+struct t_DBsession {
+  t_connectionADT con;
   t_requestADT req;
-  query_rows param;
+};
 
-  t_responseADT res = create_response();
+t_DBsessionADT start_DBsession(const char * path) {
+  t_DBsessionADT se = malloc(sizeof(struct t_DBsession));
+  t_addressADT sv_addr = create_address(path);
+  se->req = create_request();
+  se->con = connect_peer(sv_addr);
+  free_address(sv_addr);
+  return se->con == NULL ? NULL : se;
+}
 
-  pthread_data *data = (pthread_data *) p;
-  sqlite3* db = data->db;
-  t_connectionADT con = data->con;
-  pthread_mutex_t *mutex = data->mutex;
-
-  free(p);
-
-  while (1) {
-    param.n = param.rows = 0;
-
-    printf("[BD M]: Reading request\n");
-    req = read_request(con);
-
-    if (req == NULL) {
-      printf("[BD M]: server disconnected\n");
-      free_response(res);
-      unaccept(con);
-      pthread_exit(NULL);
-    }
-
-    get_request_msg(req, req_str);
-
-    printf("[BD M]: Received %s\n", req_str);
-
-    /* Comienzo de zona crítica */
-    pthread_mutex_lock(mutex);
-    execute(req_str, res, param?);
-    // sqlite3_exec(db, sql, callback, &param, &errmsg);
-    pthread_mutex_unlock(mutex);
-    /* Fin zona crítica */
-
-    if (errmsg != NULL)
-      printf("[BD]: exec error: %s\n", errmsg);
-
-    param.values[param.n - (param.n > 0)] = '\0';
-    printf("LENGTH OF DB RESPONSE: %lu\n", strlen(param.values));
-    printf("PARAM VALUES: %s\n", param.values);
-
-    if (param.n > 0) {
-      printf("[BD]: Hay %d fila%c\n", param.rows, param.rows == 1 ? '\0' : 's');
-      printf("[BD]: %s\n", param.values);
-    }
-
-    set_response_msg(res, param.values);
-    printf("[BD]: Sending response %s\n", param.values);
-
-    if (send_response(req, res) < 0) {
-      printf("[BD]: Failed to send response\n");
-      pthread_exit(NULL);
-    }
+void end_DBsession(t_DBsessionADT se) {
+  if (se != NULL) {
+    disconnect(se->con);
+    free_request(se->req);
+    free(se);
   }
-
-  pthread_exit(NULL);
 }
 
-int callback (void *p, int argc, char *argv[], char *NotUsed[]) {
-  int i;
-  query_rows *param = (query_rows *) p;
+int send_tweet(t_DBsessionADT se, const char *username, const char * msg) {
+  char response[SHORTBUF];
+  char query[QUERY_SIZE];
 
-  UNUSED(NotUsed); // Así no tira warning por parámetro no usado
+  query_insert(query, username, msg);
 
-  for (i = 0; i < argc; i++)
-    concat_value(param, argv[i]);
-  param->rows = param->rows+1;
-  param->values[param->n-1] = ROW_SEPARATOR;
+  if (!send_query(se, query, response))
+    return -1;
 
-  return 0;
+  return atoi(response);
 }
 
-void concat_value(query_rows * q, char *value) {
-  int i, j;
-  for (i = 0, j = q->n; value[i] != '\0'; i++, j++)
-    q->values[j] = value[i];
-  q->values[j++] = VALUE_SEPARATOR;
-  q->n = j;
+int send_like(t_DBsessionADT se, int tweet_id) {
+  char response[SHORTBUF];
+  char query[QUERY_SIZE];
+
+  query_like(query, tweet_id);
+  send_query(se, query, response);
+
+  return response[0] == '\0' ? -1 : atoi(response);
+}
+
+int send_refresh(t_DBsessionADT se, int from_id, t_tweet tws[]) {
+  char response[SHORTBUF];
+  char query[QUERY_SIZE];
+
+  query_refresh(query, from_id);
+
+  if (!send_query(se, query, response))
+    return -1;
+
+  return str_to_tweets(response, tws);
+}
+
+t_tweet send_show(t_DBsessionADT se, int tweet_id) {
+  char response[SHORTBUF];
+  char query[QUERY_SIZE];
+  t_tweet tw;
+
+  tw.msg[0] = '\0';
+
+  query_show(query, tweet_id);
+
+  if (send_query(se, query, response))
+    str_to_tweets(response, &tw);
+
+  return tw;
+}
+
+static int send_query(t_DBsessionADT se, const char *query, char response[]) {
+  t_responseADT res;
+  set_request_msg(se->req, query);
+  res = send_request(se->con, se->req);
+  if (res != NULL)
+    get_response_msg(res, response);
+  return res != NULL;
 }

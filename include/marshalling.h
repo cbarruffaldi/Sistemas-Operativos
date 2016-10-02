@@ -30,6 +30,6 @@ typedef struct {
 } t_tweet;
 
 void tweets_to_str (char * str, t_tweet * tws, int size);
-int str_to_tweets (char * str, t_tweet * tws);
+int str_to_tweets (const char * str, t_tweet * tws);
 
 #endif

@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static int tweet_to_str(char * str, t_tweet tw);
+static int tweet_to_str(char * str, t_tweet tw, int last);
 
-int str_to_tweets (char * str, t_tweet * tws) {
-  char aux[BUFSIZE]; // para proteger a res de las modificaciones que le hace strtok()
+int str_to_tweets (const char * str, t_tweet * tws) {
+  char aux[BUFSIZE]; // para proteger a str de las modificaciones que le hace strtok()
   int i = 0;
   strcpy(aux, str);
 
@@ -28,8 +28,9 @@ int str_to_tweets (char * str, t_tweet * tws) {
   return i;
 }
 
-static int tweet_to_str(char * str, t_tweet tw) {
-  sprintf(str, "%d%s%s%s%s%s%d%s",tw.id, SEPARATOR, tw.user, SEPARATOR, tw.msg, SEPARATOR, tw.likes, SEPARATOR);
+static int tweet_to_str(char * str, t_tweet tw, int last) {
+  sprintf(str, "%d%s%s%s%s%s%d%s",tw.id, SEPARATOR, tw.user, SEPARATOR, tw.msg, SEPARATOR, tw.likes, 
+    last ? "" : SEPARATOR);
   return strlen(str);
 }
 
@@ -38,6 +39,6 @@ void tweets_to_str (char * str, t_tweet * tws, int size) {
   int i;
   int cursor = 0;
   for (i = 0; i < size; i++) {
-    cursor = tweet_to_str(str + cursor, tws[i]);
+    cursor += tweet_to_str(str + cursor, tws[i], i == size-1);
   }
 }

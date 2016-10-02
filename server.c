@@ -1,4 +1,5 @@
 #include "include/server_marshalling.h"
+#include "include/db_marshalling.h"
 #include "include/IPC.h"
 #include "include/server.h"
 #include "include/query.h"
@@ -28,20 +29,17 @@ typedef struct {
 } pthread_data;
 
 typedef struct {
-  t_connectionADT db_con;
-  t_requestADT req;
+  t_DBsessionADT db_se;
   char user[USER_SIZE];
 } t_session_data;
 
 //argv[1] = nombre del path a server,
 //argv[2] = nombre del path a  base de datos
 
-void send_query(t_session_data * data, const char *sql, char result[]);
-void * run_thread(void * p);
-void print_session_data(t_session_data *data);
-int create_thread(char * db_path, t_sessionADT session);
-int logged(t_session_data * data);
-void send_mq(char * msg, int priority);
+static void * run_thread(void * p);
+static int create_thread(char * db_path, t_sessionADT session);
+static int logged(t_session_data * data);
+static void send_mq(char * msg, int priority);
 
 mqd_t mq; //Para la MQ
 
@@ -49,7 +47,6 @@ int main(int argc, char *argv[])
 {
   t_master_sessionADT master_session;
   t_sessionADT session;
-  key_t key; //Key de la MQ
 
   if (argc != ARG_COUNT) {
     printf("Usage: %s <server_path> <database_path>\n", argv[0]);
@@ -92,17 +89,15 @@ int main(int argc, char *argv[])
   }
 }
 
-void send_mq(char * msg, int priority) {
+static void send_mq(char * msg, int priority) {
   char buffer[MAX_NOTIFICATION]; //TODO: ver tamaño
 
   strcpy(buffer, msg);
 
   CHECK(0 <= mq_send(mq, buffer, MAX_NOTIFICATION, priority));
-
-
 }
 
-int create_thread(char * db_path, t_sessionADT session) {
+static int create_thread(char * db_path, t_sessionADT session) {
   pthread_t thread;
   pthread_data * thdata = malloc(sizeof(*thdata));
   strcpy(thdata->db_path, db_path);
@@ -110,28 +105,17 @@ int create_thread(char * db_path, t_sessionADT session) {
   return pthread_create(&thread, NULL, run_thread, thdata);
 }
 
-void * run_thread(void * p) {
+static void * run_thread(void * p) {
   int valid;
   pthread_data *thdata = (pthread_data *) p;
   t_sessionADT session = thdata->session;
-  t_requestADT req = create_request();
-  t_addressADT addr = create_address(thdata->db_path);
-  t_connectionADT con;
+  t_DBsessionADT db_se = start_DBsession(thdata->db_path);
 
-  pthread_detach(pthread_self());
+  pthread_detach(pthread_self()); // Se liberan los recursos del thread al cerrarse
 
-  if (addr == NULL) {
-    printf("[SV]: Failed to create address\n");
-    send_mq(CANNOT_CREATE_ADDRESS,ERROR);
-    pthread_exit(NULL);
-  }
-
-  con = connect_peer(addr);
-
-  if (con == NULL) {
-    printf("[SV]: Failed to connect to DB\n");
-    send_mq(CANNOT_CONNECT_DB,ERROR);
-    pthread_exit(NULL);
+  if (db_se == NULL) {
+    printf("Failed to connect to DB\n");
+    send_mq(CANNOT_CONNECT_DB, ERROR);
   }
 
   t_session_data se_data;
@@ -140,8 +124,7 @@ void * run_thread(void * p) {
 
   printf("Thread created!\n");
 
-  se_data.db_con = con;
-  se_data.req = req;
+  se_data.db_se = db_se;
   se_data.user[0] = '\0';
 
   set_session_data(session, &se_data);
@@ -150,17 +133,15 @@ void * run_thread(void * p) {
 
   if (valid == 0) {
     printf("Client disconnected\n");
-    send_mq(CLIENT_DISCONNECTED,INFO);
+    send_mq(CLIENT_DISCONNECTED, INFO);
   }
   else if (valid == -1) {
     printf("Failed to send response\n");
-    send_mq(CANNOT_SEND_RESPONSE,WARNING);
+    send_mq(CANNOT_SEND_RESPONSE, WARNING);
   }
 
-  disconnect(con);
-  free_request(req);
-  free_address(addr);
-  end_session(session);
+  end_DBsession(db_se);
+  unaccept_client(session);
   pthread_exit(NULL);
 }
 
@@ -199,86 +180,60 @@ int sv_logout(void * p) {
 
 int sv_tweet(void * p, const char * msg) {
   char mq_msg[MAX_NOTIFICATION];
-  char buffer[QUERY_SIZE], res[QUERY_SIZE];
   char *username = ((t_session_data *) p)->user;
+  t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
+
   printf("RECEIVED SV_TWEET_WITH \nuser:%s \nmsg:%s\n", username, msg);
 
   if (!logged(p))
     return -1;
 
-  query_insert(buffer, username, msg);
-  send_query(p, buffer, res);
+  /** TODO: actualizar; ya no se usa más res **/
+//  sprintf(mq_msg,TWEET_NOTIFICATION, username, res, msg);
+//  send_mq(mq_msg,INFO);
 
-  sprintf(mq_msg,TWEET_NOTIFICATION, username, res,msg);
-  send_mq(mq_msg,INFO); //TODO: cambiar el 2
-
-  return atoi(res);
+  return send_tweet(db_se, username, msg);
 }
 
-//TODO: por ahora usa res para guardar la respuesta de la BD, debería devolver arreglo de t_tweet
-t_tweet * sv_refresh(void * p, int last_id, char res[]) {
-  char buffer[QUERY_SIZE] ,mq_msg[MAX_NOTIFICATION];
-  printf("RECEIVED SV_REFRESH WITH \nid:%d\n", last_id);
-
-  if (!logged(p)) {
-    res[0] = '\0';
-    return NULL;
-  }
-
-  query_refresh(buffer, last_id);
-  send_query(p, buffer, res);
-
-  printf("Received from DB REFRESH: %s \n", res);
-
-  return NULL;
-}
-
-int sv_like(void * p, int id) {
-  char buffer[QUERY_SIZE], res[QUERY_SIZE];
+//TODO: MQ
+int sv_refresh(void * p, int from_id, t_tweet tws[]) {
   char mq_msg[MAX_NOTIFICATION];
-  printf("RECEIVED SV_LIKE WITH \nid:%d\n", id);
+  t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
 
+  printf("RECEIVED SV_REFRESH WITH \nid:%d\n", from_id);
 
   if (!logged(p))
     return -1;
 
-  query_like(buffer, id);
-  send_query(p, buffer, res);
+  return send_refresh(db_se, from_id, tws);
+}
+
+int sv_like(void * p, int id) {
+  char mq_msg[MAX_NOTIFICATION];
+  t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
+
+  printf("RECEIVED SV_LIKE WITH \nid:%d\n", id);
+
+  if (!logged(p))
+    return -1;
 
   sprintf(mq_msg,LIKE_NOTIFICATION,id);
   send_mq(mq_msg,INFO);
 
-  return atoi(res);
+  return send_like(db_se, id);
 }
 
 // TODO: por ahora recibe res y devuelve void; en realidad deberia devolver un tweet
-void sv_show(void * p, int id, char res[]) {
-  char sql[QUERY_SIZE], mq_msg[MAX_NOTIFICATION]; 
-
-  query_show(sql, id);
-  send_query(p, sql, res);
+t_tweet sv_show(void * p, int id) {
+  char mq_msg[MAX_NOTIFICATION]; 
+  t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
 
   sprintf(mq_msg,SHOW_NOTIFICATION,id);
   send_mq(mq_msg,INFO);
+
+  return send_show(db_se, id);
 }
 
-void send_query(t_session_data * data, const char *sql, char result[]) {
-  t_requestADT req = data->req;
-  t_connectionADT con = data->db_con;
-  t_responseADT res;
-
-  set_request_msg(req, sql);
-  res = send_request(con, req);
-  if (res == NULL) {
-    printf("[SV]: Error on database response\n");
-    send_mq(ERROR_DB_RESPONSE,WARNING);
-    return;
-  }
-
-  get_response_msg(res, result);
-  printf("%s\n", result);
-}
-
-int logged(t_session_data * data) {
+static int logged(t_session_data * data) {
   return data->user[0] != '\0';
 }

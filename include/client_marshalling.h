@@ -17,11 +17,11 @@ void end_session(sessionADT se);
 
 /* Envía mensaje con el encoding y el opcode apropiado,
 ** a través de la sesión dada como parámetro.
-** Devuelve el ID del último tweet registrado en la Base de Datos. */
+** Devuelve el ID del nuevo tweet. */
 int send_tweet(sessionADT se, const char * msg);
 
 /* Envía el id del tweet al cuál se quiere likear.
-** Devuelve el número de likes que le quedaron al tweet seleccionado. */
+** Devuelve el número de likes que le quedaron al tweet seleccionado o -1 si no existe el tweet */
 int send_like(sessionADT se, int tweet_id);
 
 /* Devuelve un arreglo con todos los tweets registrados en la Base de Datos.
@@ -35,7 +35,8 @@ int send_login (sessionADT se, const char *username);
 /* Desloguea al usuario. */
 int send_logout (sessionADT se);
 
-/* Imprime un tweet dado un id */
+/* Devuelve un tweet dado un id. 
+** Si el id no existe devuelve tweet con msg[0] = '\0'. */
 t_tweet send_show(sessionADT se, int tweet_id);
 
 #endif
