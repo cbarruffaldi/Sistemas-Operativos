@@ -214,20 +214,23 @@ static int logout(const char *args, sessionADT se, t_user *uinfo) {
 }
 
 static int show(const char *args, sessionADT se, t_user *uinfo) {
+  int valid;
+  t_tweet tw;
+
   if (!logged(uinfo))
     return NOT_LOGGED;
-  if (!valid_id(args))
-    return INVALID_ARGS;
-
-  t_tweet tw = send_show(se, atoi(args));
-  if (tw.msg[0] == '\0' && tw.user[0] == '\0')
-    return ABORT;
-  else if (tw.msg[0] == '\0') {
-    printf("Invalid id\n");
+  if (!valid_id(args)) {
+    printf("Invalid tweet id.\n");
     return INVALID_ARGS;
   }
-  print_tweets(&tw, 1);
-  return VALID;
+  valid = send_show(se, atoi(args), &tw);
+
+  if (valid == 1)
+    print_tweets(&tw, 1);
+  else if (valid == -1)
+    printf("No tweet with such id.\n");
+
+  return valid;
 }
 
 static int delete(const char *args, sessionADT se, t_user *uinfo) {

@@ -64,6 +64,11 @@ int main(int argc, char *argv[]) {
 
   db_addr = create_address(argv[1]);
 
+  if (db_addr == NULL) {
+    printf("[BD]: Failed to create address\n");
+    return 1;
+  }
+
   if (listen_peer(db_addr) < 0) {
     fprintf(stderr, "[BD]: Cannot listen\n");
     return 1;
@@ -76,7 +81,7 @@ int main(int argc, char *argv[]) {
 
     if (con == NULL) {
       printf("[BD]: Accept failed.\n");
-      return 0;
+      return 1;
     }
 
     printf("[BD]: Accepted!\n");

@@ -48,8 +48,7 @@ t_master_sessionADT setup_master_session(char *sv_path) {
   t_master_sessionADT se;
 
   if (addr == NULL) {
-    printf("failed to create address\n"); //TODO: Ver como comunica esto
-    exit(0);
+    return NULL;
   }
 
   printf("Server listening\n"); //TODO:Sacarlo

@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
   }
 
   if (fork() == 0) { // forkea para iniciar el daemon de logging
-      execl(LOGGER_PROCESS, LOGGER_PROCESS, QUEUE_NAME, NULL);
+    execl(LOGGER_PROCESS, LOGGER_PROCESS, QUEUE_NAME, NULL);
   }
 
  /* open the mail queue */
@@ -66,21 +66,21 @@ int main(int argc, char *argv[])
   master_session = setup_master_session(argv[1]);
 
   if (master_session == NULL) {
-    send_mq(CANNOT_INIT_SESSION,ERROR);
+    send_mq(CANNOT_INIT_SESSION, ERROR);
     return 1;
   }
 
   while (1) {
     send_mq(SERVER_READY,INFO);
     session = accept_client(master_session);
-    if (session != NULL) {
-      send_mq(CLIENT_ACCEPTED,INFO);
 
+    if (session != NULL) {
+      send_mq(CLIENT_ACCEPTED, INFO);
       create_thread(argv[2], session);
     }
-    else {
+
+    else 
       send_mq(CLIENT_NOT_ACCEPTED,ERROR);
-    }
   }
 
   end_master_session(master_session);

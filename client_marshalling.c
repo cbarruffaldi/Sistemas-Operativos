@@ -114,22 +114,19 @@ int send_logout (sessionADT se) {
   return 1;
 }
 
-t_tweet send_show (sessionADT se, int tweet_id) {
+int send_show (sessionADT se, int tweet_id, t_tweet * tw) {
   char req_bytes[SHORTBUF], res[SHORTBUF];
-  t_tweet tw;
-
-  tw.msg[0] = '\0'; // sirve como flag de id inválido para el cliente
+  tw->msg[0] = '\0';
 
   sprintf(req_bytes, "%s%s%d%s", OPCODE_SHOW, SEPARATOR, tweet_id, SEPARATOR);
 
   if (send_op(se, req_bytes, res) == 0) {
-    tw.user[0] = '\0';
-    return tw;
+    return ABORT;
   }
 
-  str_to_tweets(res, &tw);
+  str_to_tweets(res, tw);
 
-  return tw;
+  return tw->msg[0] == '\0' ? -1 : 1;
 }
 
 int send_delete(sessionADT se, int tweet_id) {
