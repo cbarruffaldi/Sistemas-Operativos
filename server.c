@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
   }
 
  /* open the mail queue */
-  mq = mq_open(QUEUE_NAME, O_WRONLY);
-  CHECK((mqd_t)-1 != mq);
+ /* Intenta abrir la MQ hasta que el proceso forkeado termine de crearla. */
+  while ( (mq = mq_open(QUEUE_NAME, O_WRONLY)) == (mqd_t) -1);
 
   master_session = setup_master_session(argv[1]);
 
@@ -199,7 +199,7 @@ int sv_refresh(void * p, int from_id, t_tweet tws[]) {
     return -1;
 
   //Si supera la max cantidad de tweet por refresh va a recibir varios
-  sprintf(mq_msg,REFRESH_NOTIFICATION); 
+  sprintf(mq_msg,REFRESH_NOTIFICATION);
   send_mq(mq_msg,INFO);
 
   return send_refresh(db_se, from_id, tws);
@@ -222,7 +222,7 @@ int sv_like(void * p, int id) {
     send_mq(mq_msg,INFO);
   }
 
-  return valid; 
+  return valid;
 }
 
 int sv_delete(void * p, int id) {
@@ -242,7 +242,7 @@ int sv_delete(void * p, int id) {
     send_mq(mq_msg, INFO);
   }
 
-  return valid; 
+  return valid;
 }
 
 t_tweet sv_show(void * p, int id) {

@@ -1,25 +1,21 @@
 FIFO
 
 1- Hacer make fifo.
-2- Ejecutar server pasando como argumento los nombres dos fifos, uno por donde
-escuchará y otro por donde se comunicará con la base de datos (por ej ./server.bin servidor).
-3- Ejecutar n clients en otras terminales pasando como argumento fifo del servidor (por ej ./client.bin servidor).
-4- Escribir input en terminales de client.
+2- Ejecutar "./database.bin (db_fifo_name)"
+3- Ejecutar "./server.bin (sv_fifo_name) (db_fifo_name)"
+4- Ejecutar n clients en otras terminales pasando como argumento fifo del servidor ("./client.bin (sv_fifo_name)").
 
 SOCKETS
 
 1- Hacer make sockets.
-2- Ejecutar server pasando como argumentos "hostname:(server_port)" y "hostname:(db_port)"
-de la máquina donde se correrá el server. Para averiguar el hostname ejecutar "hostname" en la terminal.
-3- Ejecutar n clients con ese mismo hostname y server_port.
-4- Escribir input en terminales de client.
+2- Ejecutar "hostname" para averiguar el nombre de host de la computadora.
+3- Ejecutar "./database.bin (hostname):(db_port)"
+4- Ejecutar "./server.bin (hostname):(sv_port) (hostname):(db_port)"
+5- Ejecutar n clients en otras terminales pasando como argumento el socket del servidor ("./client.bin (hostname):(sv_port)").
 
 PARA CORRER EN PAMPERO LOS SOCKETS
 
 1- Conectarse desde ssh a pampero (ssh nombre_de_usuario@pampero.itba.edu.ar) o estar en una de las compus del lab.
-2- Ejecutar "./server.bin pampero:(sv_port)" dentro de pampero.
-3- Ejecutar "./client.bin pampero.itba.edu.ar:(sv_port)" desde una compu no conectada a pampero.
-4- Escribir input.
-
-
-Escribiendo "help" en el cliente se obtiene un menú de funciones disponibles.
+2- Ejecutar "./database.bin pampero:(db_port)"
+3- Ejecutar "./server.bin pampero:(sv_port) pampero:(db_port)" dentro de pampero.
+4- Ejecutar "./client.bin pampero.itba.edu.ar:(sv_port)" desde una compu no conectada a pampero.
