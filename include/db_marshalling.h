@@ -24,7 +24,8 @@ int send_refresh(t_DBsessionADT se, int from_id, t_tweet tws[]);
 ** Si el tweet no existe devuelve un tweet con msg[0] = '\0'. */
 t_tweet send_show(t_DBsessionADT se, int tweet_id);
 
-//TODO: descripcion
+/* Devuelve 1 si hay un tweet con el id y el username dados, y lo borra.
+** Devuelve -1 si no se encuentra ese tweet. */
 int send_delete(t_DBsessionADT se, char * username, int tweet_id);
 
 #endif

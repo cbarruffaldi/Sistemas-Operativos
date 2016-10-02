@@ -42,13 +42,14 @@ static int valid_id(const char *args);
 static int valid_username(const char *username);
 
 static char * fill(char c, int length);
+static void print_border();
 static void print_user(char usr[]);
 static void print_msg(char msg[]);
-static void print_border();
+static print_info(int id, int likes) {
 static void print_tweet(t_tweet tw);
 static void print_tweets(t_tweet * tws, int count);
 static void close_line(int filled);
-static void start_line();
+static void start_of_line();
 
 static void show_cmd_help(command cmd);
 
@@ -263,10 +264,8 @@ static void print_tweets(t_tweet * tws, int count) {
 }
 
 static void print_tweet(t_tweet tw) {
-  char * spaces = fill(' ', MSG_COLUMNS - 27);
   print_user(tw.user);
   print_msg(tw.msg);
-  printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, spaces); // TODO: Hacer funcioncita
   print_border();
   free(spaces);
 }
@@ -287,7 +286,7 @@ static void print_msg(char msg[]) {
   char * word = strtok(msg, " ");
   int filled = 0;
 
-	start_line();
+	start_of_line();
   while (word != NULL) {
     int wlen = strlen(word);
     if (wlen + filled < MSG_COLUMNS - 4 || \
@@ -298,14 +297,20 @@ static void print_msg(char msg[]) {
     }
     else {
 			close_line(filled);
-      start_line();
+      start_of_line();
       filled = 0;
     }
   }
   close_line(filled);
 }
 
-static void start_line() {
+static print_info(int id, int likes) {
+	char * spaces = fill(' ', MSG_COLUMNS - 26);
+	printf("| id#%-6d | likes:%-5d |%s|\n", tw.id, tw.likes, spaces);
+	free(spaces);
+}
+
+static void start_of_line() {
 	printf("| ");
 }
 

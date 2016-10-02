@@ -39,7 +39,9 @@ int send_logout (sessionADT se);
 ** Si el id no existe devuelve tweet con msg[0] = '\0'. */
 t_tweet send_show(sessionADT se, int tweet_id);
 
-//TODO: descripcion
+/* Borra de la base de datos el tweet con el id dado.
+** Solo puede borrar un tweet el usuario que lo escribió (del mismo username).
+** Devuelve 1 si se pudo borrar el tweet y -1 si no. */
 int send_delete(sessionADT se, int tweet_id);
 
 #endif
