@@ -12,8 +12,13 @@
 //http://man7.org/tlpi/download/TLPI-52-POSIX_Message_Queues.pdf
 //http://stackoverflow.com/questions/3056307/how-do-i-use-mqueue-in-a-c-program-on-a-linux-based-system
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
+    if (argc != 2) {
+        printf("%s <mq_name>\n", argv[0]);
+        return 1;
+    }
+
     mqd_t mq;
     struct mq_attr attr;
     char buffer[MAX_NOTIFICATION + 1];
@@ -26,7 +31,7 @@ int main(int argc, char **argv)
     attr.mq_curmsgs = 0;
 
     /* Crear la MQ */
-    mq = mq_open(QUEUE_NAME, O_CREAT | O_RDONLY, 0644, &attr);
+    mq = mq_open(argv[1], O_CREAT | O_RDONLY, 0644, &attr);
     CHECK((mqd_t)-1 != mq);
     printf("MQ INITIALIZED...\n");
 
@@ -50,7 +55,7 @@ int main(int argc, char **argv)
 
     /* clean*/
     CHECK((mqd_t)-1 != mq_close(mq));
-    CHECK((mqd_t)-1 != mq_unlink(QUEUE_NAME));
+    CHECK((mqd_t)-1 != mq_unlink(argv[1]));
 
     return 0;
 }

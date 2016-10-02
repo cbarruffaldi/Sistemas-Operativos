@@ -23,6 +23,8 @@
 #define LOGGER_PROCESS "log.bin"
 #define PATH_SIZE 64
 
+#define QUEUE_NAME  "/SV_TWITTER_QUEUE"
+
 
 typedef struct {
   char db_path[PATH_SIZE];
@@ -60,7 +62,7 @@ int main(int argc, char *argv[])
   }
 
   if (fork() == 0) { // forkea para iniciar el daemon de logging
-      execl(LOGGER_PROCESS, LOGGER_PROCESS, NULL);
+      execl(LOGGER_PROCESS, LOGGER_PROCESS, QUEUE_NAME, NULL);
       printf("FORK no se debería imprimir\n");
   }
 
@@ -93,6 +95,9 @@ int main(int argc, char *argv[])
       send_mq(CANNOT_OPEN_SESSION,ERROR);
     }
   }
+
+  end_master_session(master_session);
+  return 1;
 }
 
 static void send_mq(char * msg, int priority) {

@@ -20,7 +20,12 @@ t_DBsessionADT start_DBsession(const char * path) {
   t_addressADT sv_addr = create_address(path);
   se->req = create_request();
   se->con = connect_peer(sv_addr);
+  
   free_address(sv_addr);
+
+  if (se->con == NULL)
+    free_request(se->req);
+
   return se->con == NULL ? NULL : se;
 }
 

@@ -34,10 +34,10 @@ static int tweet_to_str(char * str, t_tweet tw, int last) {
   return strlen(str);
 }
 
-
 void tweets_to_str (char * str, t_tweet * tws, int size) {
   int i;
   int cursor = 0;
+  str[0] = '\0';
   for (i = 0; i < size; i++) {
     cursor += tweet_to_str(str + cursor, tws[i], i == size-1);
   }

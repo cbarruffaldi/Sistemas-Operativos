@@ -20,6 +20,9 @@ t_master_sessionADT setup_master_session(char *sv_path);
 /* Finaliza la sesión */
 void unaccept_client(t_sessionADT se);
 
+/* Finaliza sesión maestra */
+void end_master_session(t_master_sessionADT se);
+
 /* Espera nuevas conecciones a master session, devuelve una sesión con
 ** la nueva conexión. */
 t_sessionADT accept_client(t_master_sessionADT master_session);
