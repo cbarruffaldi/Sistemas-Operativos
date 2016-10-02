@@ -20,6 +20,7 @@
 
 #define ARG_COUNT 3
 #define DATABASE_PROCESS "database.bin"
+#define LOGGER_PROCESS "log.bin"
 #define PATH_SIZE 64
 
 
@@ -53,15 +54,20 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  if (fork() == 0) {
+  if (fork() == 0) { // forkea para iniciar la base de datos
       execl(DATABASE_PROCESS, DATABASE_PROCESS, argv[2], NULL);
+      printf("FORK no se debería imprimir\n");
+  }
+
+  if (fork() == 0) { // forkea para iniciar el daemon de logging
+      execl(LOGGER_PROCESS, LOGGER_PROCESS, NULL);
       printf("FORK no se debería imprimir\n");
   }
 
  /* open the mail queue */
   mq = mq_open(QUEUE_NAME, O_WRONLY);
   CHECK((mqd_t)-1 != mq);
-  
+
   master_session = setup_master_session(argv[1]);
 
   if (master_session == NULL) {
@@ -70,7 +76,7 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  send_mq(DATASE_CORRECT_NOTIFICATION,INFO); 
+  send_mq(DATASE_CORRECT_NOTIFICATION,INFO);
 
 
   while (1) {
@@ -78,8 +84,8 @@ int main(int argc, char *argv[])
     session = accept_client(master_session);
     if (session != NULL) {
       printf("[SV]: ACCEPTED!\n");
-      send_mq(CLIENT_ACCEPTED,INFO); 
-   
+      send_mq(CLIENT_ACCEPTED,INFO);
+
       create_thread(argv[2], session);
     }
     else {
@@ -169,7 +175,7 @@ int sv_logout(void * p) {
   if (!logged(p))
     return 0;
   printf("User %s logged out\n", user);
-  
+
   sprintf(mq_msg,LOGOUT_NOTIFICATION,user);
   send_mq(mq_msg,INFO);
 
@@ -223,7 +229,6 @@ int sv_like(void * p, int id) {
   return send_like(db_se, id);
 }
 
-// TODO: por ahora recibe res y devuelve void; en realidad deberia devolver un tweet
 t_tweet sv_show(void * p, int id) {
   char mq_msg[MAX_NOTIFICATION]; 
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;

@@ -20,8 +20,6 @@
 #define USER_SIZE 32
 #define MSG_SIZE 140
 
-#define COLUMNS 60
-
 typedef struct {
   char user[USER_SIZE];
   char msg[MSG_SIZE];
@@ -29,7 +27,14 @@ typedef struct {
   unsigned int id;
 } t_tweet;
 
+/** Guarda en la memoria comenzando a partir de *str el arreglo de tweets tws
+** en forma de string (no se encarga de reservar memoria).
+** Para formar el string, usa los atributos de la estructura t_tweet,
+** y los inserta como texto, separándolos con el string SEPARATOR. Entre los atributos de
+** dos tweets distintos del arreglo, también se ubica un SEPARATOR. */
 void tweets_to_str (char * str, t_tweet * tws, int size);
+
+/** Lo inverso a tweets_to_str. Devuelve la cantidad de tweets leídos. */
 int str_to_tweets (const char * str, t_tweet * tws);
 
 #endif

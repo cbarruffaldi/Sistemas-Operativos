@@ -15,7 +15,7 @@
 
 /* Cantidad de comandos */
 #define CMDS_SIZE (sizeof(commands)/sizeof(commands[0]))
-#define COLUMNS 60
+#define MSG_COLUMNS 60
 
 /* Estructura que representa un comando */
 typedef struct {
@@ -238,7 +238,7 @@ static void print_tweets(t_tweet * tws, int count) {
 }
 
 static void print_tweet(t_tweet tw) {
-  char * spaces = fill(' ', COLUMNS - 27);
+  char * spaces = fill(' ', MSG_COLUMNS - 27);
   print_user(tw.user);
   print_msg(tw.msg);
   printf("| id:%5d | likes:%5d |%s|\n", tw.id, tw.likes, spaces); // TODO: Hacer funcioncita
@@ -247,13 +247,13 @@ static void print_tweet(t_tweet tw) {
 }
 
 static void print_border() {
-  char * border = fill('-', COLUMNS - 2);
+  char * border = fill('-', MSG_COLUMNS - 2);
   printf(" %s\n", border);
   free(border);
 }
 
 static void print_user(char usr[]) {
-  char * spaces = fill(' ', COLUMNS - strlen(usr) - 4);
+  char * spaces = fill(' ', MSG_COLUMNS - strlen(usr) - 4);
   printf("| %s:%s|\n", usr, spaces);
   free(spaces);
 }
@@ -265,8 +265,8 @@ static void print_msg(char msg[]) {
 	start_line();
   while (word != NULL) {
     int wlen = strlen(word);
-    if (wlen + filled < COLUMNS - 4 || \
-      (filled == 0 && wlen > COLUMNS - 4)) { // la palabra no entra en un renglon entero.
+    if (wlen + filled < MSG_COLUMNS - 4 || \
+      (filled == 0 && wlen > MSG_COLUMNS - 4)) { // la palabra no entra en un renglon entero.
       printf("%s ", word);
       filled += (wlen + 1);
       word = strtok(NULL, " ");
@@ -285,7 +285,7 @@ static void start_line() {
 }
 
 static void close_line(int filled) {
-  int c = COLUMNS - filled - 3;
+  int c = MSG_COLUMNS - filled - 3;
   char * spaces = fill(' ', c);
   c = (c >= 0) ? c : 0;
 	printf("%s|\n", spaces);
