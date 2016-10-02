@@ -1,8 +1,6 @@
 #ifndef _CLIENT_MARSHALLING_
 #define _CLIENT_MARSHALLING_
 
-#define ABORT -127  /* Hubo problema al enviar algo al servidor */
-
 #include "marshalling.h"
 
 /* Representa una sesión de conexión cliente -> servidor */

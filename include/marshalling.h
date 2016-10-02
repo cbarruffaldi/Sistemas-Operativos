@@ -6,6 +6,8 @@
 #define MAX_TW_REFRESH 10
 #define SHORTBUF 256
 
+#define ABORT -127  /* Hubo problema de IPC */
+
 #define INVALID_MSG "invalid"
 
 #define SEPARATOR ":"

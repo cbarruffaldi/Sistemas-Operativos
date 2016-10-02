@@ -49,7 +49,7 @@ int send_tweet(t_DBsessionADT se, const char *username, const char * msg) {
   query_insert(query, username, msg);
 
   if (!send_query(se, query, response))
-    return NOT_VALID;
+    return ABORT;
 
   return atoi(response);
 }
@@ -59,7 +59,8 @@ int send_like(t_DBsessionADT se, int tweet_id) {
   char query[QUERY_SIZE];
 
   query_like(query, tweet_id);
-  send_query(se, query, response);
+  if (!send_query(se, query, response))
+    return ABORT;
 
   return response[0] == '\0' ? NOT_VALID : atoi(response);
 }
@@ -69,7 +70,8 @@ int send_delete(t_DBsessionADT se, char * username, int tweet_id) {
   char query[QUERY_SIZE];
 
   query_delete(query, username, tweet_id);
-  send_query(se, query, response);
+  if (!send_query(se, query, response))
+    return ABORT;
 
   return response[0] == '\0' ? NOT_VALID : VALID;
 }
@@ -81,24 +83,23 @@ int send_refresh(t_DBsessionADT se, int from_id, t_tweet tws[]) {
   query_refresh(query, from_id);
 
   if (!send_query(se, query, response))
-    return -1;
+    return ABORT;
 
   return str_to_tweets(response, tws);
 }
 
-t_tweet send_show(t_DBsessionADT se, int tweet_id) {
+int send_show(t_DBsessionADT se, int tweet_id, t_tweet *tw) {
   char response[SHORTBUF];
   char query[QUERY_SIZE];
-  t_tweet tw;
-
-  tw.msg[0] = '\0';
 
   query_show(query, tweet_id);
 
-  if (send_query(se, query, response))
-    str_to_tweets(response, &tw);
+  if (!send_query(se, query, response))
+    return ABORT;
+  
+  str_to_tweets(response, tw);
 
-  return tw;
+  return VALID;
 }
 
 static int send_query(t_DBsessionADT se, const char *query, char response[]) {

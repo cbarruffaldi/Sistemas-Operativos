@@ -32,6 +32,7 @@ typedef struct {
 
 typedef struct {
   t_DBsessionADT db_se;
+  t_sessionADT sv_se;
   char user[USER_SIZE];
 } t_session_data;
 
@@ -42,6 +43,7 @@ static void * run_thread(void * p);
 static int create_thread(char * db_path, t_sessionADT session);
 static int logged(t_session_data * data);
 static void send_mq(char * msg, int priority);
+static void close_thread(t_session_data * data);
 
 mqd_t mq; //Para la MQ
 
@@ -78,7 +80,6 @@ int main(int argc, char *argv[])
       send_mq(CLIENT_ACCEPTED, INFO);
       create_thread(argv[2], session);
     }
-
     else 
       send_mq(CLIENT_NOT_ACCEPTED,ERROR);
   }
@@ -119,12 +120,11 @@ static void * run_thread(void * p) {
 
   send_mq(ACHIEVED_CONNECT_DATABSE, INFO);
 
-
   t_session_data se_data;
-
 
   se_data.db_se = db_se;
   se_data.user[0] = '\0';
+  se_data.sv_se = session;
 
   set_session_data(session, &se_data);
 
@@ -137,9 +137,8 @@ static void * run_thread(void * p) {
     send_mq(CANNOT_SEND_RESPONSE, WARNING);
   }
 
-  end_DBsession(db_se);
-  unaccept_client(session);
-  pthread_exit(NULL);
+  close_thread(&se_data);
+  return NULL;
 }
 
 int sv_login(void * p, const char * username) {
@@ -180,6 +179,7 @@ int sv_tweet(void * p, const char * msg) {
   char mq_msg[MAX_NOTIFICATION];
   char *username = ((t_session_data *) p)->user;
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
+  int id;
 
   if (!logged(p))
     return -1;
@@ -187,13 +187,18 @@ int sv_tweet(void * p, const char * msg) {
   sprintf(mq_msg,TWEET_NOTIFICATION, username, msg);
   send_mq(mq_msg,INFO);
 
-  return send_tweet(db_se, username, msg);
-}
+  id = send_tweet(db_se, username, msg);
 
+  if (id == ABORT)
+    close_thread(p);
+
+  return id;
+}
 
 int sv_refresh(void * p, int from_id, t_tweet tws[]) {
   char mq_msg[MAX_NOTIFICATION];
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
+  int n;
 
   if (!logged(p))
     return -1;
@@ -202,7 +207,12 @@ int sv_refresh(void * p, int from_id, t_tweet tws[]) {
   sprintf(mq_msg,REFRESH_NOTIFICATION);
   send_mq(mq_msg,INFO);
 
-  return send_refresh(db_se, from_id, tws);
+  n = send_refresh(db_se, from_id, tws);
+
+  if (n == ABORT)
+    close_thread(p);
+
+  return n;
 }
 
 int sv_like(void * p, int id) {
@@ -217,10 +227,12 @@ int sv_like(void * p, int id) {
 
   valid = send_like(db_se, id);
 
-  if(valid != -1) {
+  if(valid != NOT_VALID) {
     sprintf(mq_msg,LIKE_NOTIFICATION,id);
     send_mq(mq_msg,INFO);
   }
+  else if (valid == ABORT)
+    close_thread(p);
 
   return valid;
 }
@@ -237,24 +249,40 @@ int sv_delete(void * p, int id) {
     return -1;
 
   valid = send_delete(db_se, username, id);
-  if (valid != -1) {
+  if (valid != NOT_VALID) {
     sprintf(mq_msg, DELETE_NOTIFICATION, id, username);
     send_mq(mq_msg, INFO);
   }
+  else if (valid == ABORT)
+    close_thread(p);
 
   return valid;
 }
 
 t_tweet sv_show(void * p, int id) {
+  int valid;
   char mq_msg[MAX_NOTIFICATION];
+  t_tweet tw;
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
 
   sprintf(mq_msg,SHOW_NOTIFICATION,id);
   send_mq(mq_msg,INFO);
 
-  return send_show(db_se, id);
+  valid = send_show(db_se, id, &tw);
+
+  if (valid == ABORT)
+    close_thread(p);
+
+  return tw;
 }
 
 static int logged(t_session_data * data) {
   return data->user[0] != '\0';
+}
+
+static void close_thread(t_session_data * data) {
+  send_mq(LOST_CONNECT_DB, ERROR);
+  end_DBsession(data->db_se);
+  unaccept_client(data->sv_se);
+  pthread_exit(NULL);
 }
