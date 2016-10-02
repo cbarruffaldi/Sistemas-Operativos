@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
   if (master_session == NULL) {
     printf("Cannot init session\n");
     send_mq(CANNOT_INIT_SESSION,ERROR);
-    return 0;
+    return 1;
   }
 
   send_mq(DATASE_CORRECT_NOTIFICATION,INFO);
@@ -101,10 +101,8 @@ int main(int argc, char *argv[])
 }
 
 static void send_mq(char * msg, int priority) {
-  char buffer[MAX_NOTIFICATION]; //TODO: ver tamaño
-
+  char buffer[MAX_NOTIFICATION];
   strcpy(buffer, msg);
-
   CHECK(0 <= mq_send(mq, buffer, MAX_NOTIFICATION, priority));
 }
 
