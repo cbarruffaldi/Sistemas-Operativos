@@ -125,7 +125,6 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo) {
 
   if (len <= MSG_SIZE && len > 0) {
 		strcpy(tw_msg, args);
-    printf("Received valid tweet: %s\n", tw_msg);
 		sanitize_msg(tw_msg);
 
 	  send_tweet(se, tw_msg);
@@ -137,7 +136,7 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo) {
     printf("Can't tweet an empty tweet!\n");
   }
   else {
-    printf("Tweet too long.\n");
+    printf("Tweet too long. Tweets can't exceed %d characters\n",MSG_SIZE);
   }
 
   return INVALID_ARGS;
@@ -160,7 +159,7 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
     return NOT_LOGGED;
 
   if (args[0] == '\0') {
-    printf("Need tweet id in order to like it\n");
+    printf("Need tweet id in order to like it\nFor more information use 'help'\n");
     return INVALID_ARGS;
   }
   if (!valid_id(args)) {
@@ -169,7 +168,6 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
   }
 
   id = atoi(args);
-  printf("Received valid like %d\n", id);
 
 	likes = send_like(se, id);
 
@@ -193,7 +191,7 @@ static int refresh(const char *args, sessionADT se, t_user *uinfo) {
 	if (tws != NULL)
 		print_tweets(tws, count);
 	else
-		printf("Received NULL tweet array\n");
+		printf("Received NULL tweet array\n");   //TODO:Sacarlo
 
 	free(tws);
 	return VALID;

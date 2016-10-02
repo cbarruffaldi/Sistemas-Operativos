@@ -48,16 +48,14 @@ t_master_sessionADT setup_master_session(char *sv_path) {
   t_master_sessionADT se;
 
   if (addr == NULL) {
-    printf("failed to create address\n");
+    printf("failed to create address\n"); //TODO: Ver como comunica esto
     exit(0);
   }
 
-  printf("Opening channel...\n");
+  printf("Server listening\n"); //TODO:Sacarlo
 
-  printf("Server listening\n");
 
   if (listen_peer(addr) < 0) {
-    fprintf(stderr, "Cannot listen\n");
     return NULL;
   }
 
@@ -71,11 +69,8 @@ t_sessionADT accept_client(t_master_sessionADT master_session) {
   t_sessionADT se;
 
   if (con == NULL) {
-    printf("Accept failed.\n");
     return NULL;
   }
-
-  printf("Accepted!\n");
 
   se = malloc(sizeof(struct t_session));
 
@@ -174,7 +169,6 @@ int refresh(char * msg, t_responseADT res, void * data) {
     return 0;
 
   tweets_to_str(str, tws, n);
-  printf("[SV M]: Received from server: %s\n", str);
 
   set_response_msg(res, str);
 
