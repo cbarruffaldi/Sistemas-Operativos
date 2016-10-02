@@ -19,7 +19,6 @@
 
 #define MAX_NOTIFICATION 1024
 
-#define QUEUE_NAME  "/TWITTER_QUEUE"
 #define MSG_STOP    "exit"
 
 #define CHECK(x) \
