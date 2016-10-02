@@ -25,6 +25,7 @@
 static void handle_validity(int valid);
 static int readline_no_spaces(char *str, unsigned int maxlen);
 static int extract_cmd_name(char * cmd_name, const char * str);
+void print_welcome();
 
 int main(int argc, char *argv[]) {
   char buffer[MAX_LEN];
@@ -46,9 +47,7 @@ int main(int argc, char *argv[]) {
     printf("Failed to connect\n");
     return 1;
   }
-
-  printf("Client communicated to server\n");
-
+  print_welcome();
   while (1) {
     printf("> ");
     readline_no_spaces(buffer, MAX_LEN);
@@ -126,4 +125,15 @@ static void handle_validity(int valid) {
       printf("%s\n", ALREADY_LOGGED_MSG);
       break;
   }
+}
+
+void print_welcome(){
+  printf("\t\t\t  _____          _ _   _            \n");
+  printf("\t\t\t |_   _|_      _(_) |_| |_ ___ _ __ \n");
+  printf("\t\t\t   | | \\ \\ /\\ / / | __| __/ _ \\ '__|\n");
+  printf("\t\t\t   | |  \\ V  V /| | |_| ||  __/ |   \n");
+  printf("\t\t\t   |_|   \\_/\\_/ |_|\\__|\\__\\___|_|   \n\n");
+  printf("\t\t\t\t\t\t\t*For help enter 'help'\n");
+  printf("Please Log In:\n");
+
 }

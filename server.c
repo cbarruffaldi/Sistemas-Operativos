@@ -58,12 +58,10 @@ int main(int argc, char *argv[])
 
   if (fork() == 0) { // forkea para iniciar la base de datos
       execl(DATABASE_PROCESS, DATABASE_PROCESS, argv[2], NULL);
-      printf("FORK no se debería imprimir\n");
   }
 
   if (fork() == 0) { // forkea para iniciar el daemon de logging
       execl(LOGGER_PROCESS, LOGGER_PROCESS, QUEUE_NAME, NULL);
-      printf("FORK no se debería imprimir\n");
   }
 
  /* open the mail queue */
@@ -73,7 +71,6 @@ int main(int argc, char *argv[])
   master_session = setup_master_session(argv[1]);
 
   if (master_session == NULL) {
-    printf("Cannot init session\n");
     send_mq(CANNOT_INIT_SESSION,ERROR);
     return 0;
   }
@@ -82,17 +79,15 @@ int main(int argc, char *argv[])
 
 
   while (1) {
-    printf("[SV]: Accepting...\n");
+    send_mq(SERVER_READY,INFO);
     session = accept_client(master_session);
     if (session != NULL) {
-      printf("[SV]: ACCEPTED!\n");
       send_mq(CLIENT_ACCEPTED,INFO);
 
       create_thread(argv[2], session);
     }
     else {
-      printf("[SV]: Couldn't open session\n");
-      send_mq(CANNOT_OPEN_SESSION,ERROR);
+      send_mq(CLIENT_NOT_ACCEPTED,ERROR);
     }
   }
 
@@ -125,7 +120,6 @@ static void * run_thread(void * p) {
   pthread_detach(pthread_self()); // Se liberan los recursos del thread al cerrarse
 
   if (db_se == NULL) {
-    printf("Failed to connect to DB\n");
     send_mq(CANNOT_CONNECT_DB, ERROR);
   }
 
@@ -133,7 +127,6 @@ static void * run_thread(void * p) {
 
   free(p); // Ya se extrajeron los datos --> se libera
 
-  printf("Thread created!\n");
 
   se_data.db_se = db_se;
   se_data.user[0] = '\0';
@@ -143,11 +136,9 @@ static void * run_thread(void * p) {
   valid = attend(session);
 
   if (valid == 0) {
-    printf("Client disconnected\n");
     send_mq(CLIENT_DISCONNECTED, INFO);
   }
   else if (valid == -1) {
-    printf("Failed to send response\n");
     send_mq(CANNOT_SEND_RESPONSE, WARNING);
   }
 
@@ -159,10 +150,8 @@ static void * run_thread(void * p) {
 int sv_login(void * p, const char * username) {
   char * user = ((t_session_data *) p)->user;
   char mq_msg[MAX_NOTIFICATION];
-  printf("[SV]: RECEIVED SV_LOGIN from %s\n", username);
 
   if (!logged(p) && strlen(username) < USER_SIZE) {
-    printf("[SV]: User logged in as %s\n", username);
     strcpy(user, username);
 
     sprintf(mq_msg,LOGIN_NOTIFICATION,user);
@@ -179,7 +168,6 @@ int sv_logout(void * p) {
   char *user = ((t_session_data *) p)->user;
   if (!logged(p))
     return 0;
-  printf("User %s logged out\n", user);
 
   sprintf(mq_msg,LOGOUT_NOTIFICATION,user);
   send_mq(mq_msg,INFO);
@@ -194,27 +182,26 @@ int sv_tweet(void * p, const char * msg) {
   char *username = ((t_session_data *) p)->user;
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
 
-  printf("RECEIVED SV_TWEET_WITH \nuser:%s \nmsg:%s\n", username, msg);
-
   if (!logged(p))
     return -1;
 
-  /** TODO: actualizar; ya no se usa más res **/
-//  sprintf(mq_msg,TWEET_NOTIFICATION, username, res, msg);
-//  send_mq(mq_msg,INFO);
+  sprintf(mq_msg,TWEET_NOTIFICATION, username, msg);
+  send_mq(mq_msg,INFO);
 
   return send_tweet(db_se, username, msg);
 }
 
-//TODO: MQ
+
 int sv_refresh(void * p, int from_id, t_tweet tws[]) {
   char mq_msg[MAX_NOTIFICATION];
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
 
-  printf("RECEIVED SV_REFRESH WITH \nid:%d\n", from_id);
-
   if (!logged(p))
     return -1;
+
+  //Si supera la max cantidad de tweet por refresh va a recibir varios
+  sprintf(mq_msg,REFRESH_NOTIFICATION); 
+  send_mq(mq_msg,INFO);
 
   return send_refresh(db_se, from_id, tws);
 }
