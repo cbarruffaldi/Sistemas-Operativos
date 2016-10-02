@@ -54,6 +54,16 @@ int send_like(t_DBsessionADT se, int tweet_id) {
   return response[0] == '\0' ? -1 : atoi(response);
 }
 
+int send_delete(t_DBsessionADT se, char * username, int tweet_id) {
+  char response[SHORTBUF];
+  char query[QUERY_SIZE];
+
+  query_delete(query, username, tweet_id);
+  send_query(se, query, response);
+
+  return response[0] == '\0' ? -1 : 1;
+}
+
 int send_refresh(t_DBsessionADT se, int from_id, t_tweet tws[]) {
   char response[SHORTBUF];
   char query[QUERY_SIZE];

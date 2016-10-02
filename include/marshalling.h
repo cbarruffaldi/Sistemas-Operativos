@@ -16,6 +16,7 @@
 #define OPCODE_LOGIN "3"
 #define OPCODE_LOGOUT "4"
 #define OPCODE_SHOW "5"
+#define OPCODE_DELETE "6"
 
 #define USER_SIZE 32
 #define MSG_SIZE 140

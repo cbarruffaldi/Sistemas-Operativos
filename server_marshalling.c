@@ -32,6 +32,7 @@ int refresh(char * msg, t_responseADT res, void * data);
 int login(char * msg, t_responseADT res, void * data);
 int logout(char * msg, t_responseADT res, void * data);
 int show(char * msg, t_responseADT res, void * data);
+int delete(char * msg, t_responseADT res, void * data);
 
 /*
 ** Cada función decodifica msg, llama a la función del servidor y settea en
@@ -39,7 +40,7 @@ int show(char * msg, t_responseADT res, void * data);
 */
 typedef int (*command) (char* msg, t_responseADT res, void * data);
 
-static command commands[]= {tweet, like, refresh, login, logout, show};
+static command commands[]= {tweet, like, refresh, login, logout, show, delete};
 
 t_master_sessionADT setup_master_session(char *sv_path) {
 
@@ -193,6 +194,17 @@ int show(char * msg, t_responseADT res, void * data) {
   return 1;
 }
 
+int delete(char * msg, t_responseADT res, void * data) {
+  char str[SHORTBUF];
+  int id = atoi(msg);
+  int ans = sv_delete(data, id);
+
+  sprintf(str, "%d", ans);;
+  set_response_msg(res, str);
+  return 1;
+}
+
+
 int login(char * msg, t_responseADT res, void * data) {
   int valid = sv_login(data, msg);
   if (valid)
@@ -206,4 +218,3 @@ int logout(char * msg, t_responseADT res, void * data) {
     set_response_msg(res, "");
   return valid;
 }
-

@@ -24,12 +24,22 @@ SELECT MAX("ATR_TWEET_ID") FROM "TABLE_TWEET";"
 SELECT * FROM "TABLE_TWEET" \
 WHERE "ATR_TWEET_ID" = %d;"
 
+#define Q_DELETE "\
+SELECT "ATR_TWEET_ID" FROM "TABLE_TWEET" \
+WHERE "ATR_TWEET_ID" = %d AND "ATR_TWEET_USER" = '%s'; \
+DELETE FROM "TABLE_TWEET" \
+WHERE "ATR_TWEET_ID" = %d AND "ATR_TWEET_USER" = '%s';"
+
 void query_refresh(char *sql, int first_id) {
 	sprintf(sql, Q_REFRESH, first_id, first_id + TW_BLOCK_SIZE);
 }
 
 void query_like(char *sql, int id) {
 	sprintf(sql, Q_LIKE, id, id, id);
+}
+
+void query_delete(char *sql, const char *username, int id) {
+	sprintf(sql, Q_DELETE, id, username, id, username);
 }
 
 void query_insert(char *sql, const char *username, const char *msg) {

@@ -20,8 +20,11 @@ int send_like(t_DBsessionADT se, int id);
 ** Devuelve la cantidad de elementos dentro del arreglo. */
 int send_refresh(t_DBsessionADT se, int from_id, t_tweet tws[]);
 
-/* Devuelve un tweet según id 
+/* Devuelve un tweet según id
 ** Si el tweet no existe devuelve un tweet con msg[0] = '\0'. */
 t_tweet send_show(t_DBsessionADT se, int tweet_id);
+
+//TODO: descripcion
+int send_delete(t_DBsessionADT se, char * username, int tweet_id);
 
 #endif

@@ -17,4 +17,6 @@ void query_insert(char *buffer, const char *username, const char *msg);
 
 void query_show(char *sql, int id);
 
+void query_delete(char *sql, const char *username, int id);
+
 #endif

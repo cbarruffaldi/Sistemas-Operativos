@@ -16,4 +16,6 @@ int sv_logout(void * p);
 
 t_tweet sv_show(void * p, int id);
 
+int sv_delete(void * p, int id);
+
 #endif

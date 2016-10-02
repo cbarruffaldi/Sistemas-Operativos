@@ -35,8 +35,11 @@ int send_login (sessionADT se, const char *username);
 /* Desloguea al usuario. */
 int send_logout (sessionADT se);
 
-/* Devuelve un tweet dado un id. 
+/* Devuelve un tweet dado un id.
 ** Si el id no existe devuelve tweet con msg[0] = '\0'. */
 t_tweet send_show(sessionADT se, int tweet_id);
+
+//TODO: descripcion
+int send_delete(sessionADT se, int tweet_id);
 
 #endif

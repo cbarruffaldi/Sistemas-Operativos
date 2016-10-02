@@ -110,7 +110,7 @@ t_tweet send_show (sessionADT se, int tweet_id) {
 
   tw.msg[0] = '\0'; // sirve como flag de error para el cliente
 
-  sprintf(req_bytes, "%s%s%d", OPCODE_SHOW, SEPARATOR, tweet_id);
+  sprintf(req_bytes, "%s%s%d%s", OPCODE_SHOW, SEPARATOR, tweet_id, SEPARATOR);
 
   if (send_op(se, req_bytes, res) == 0) {
     return tw;
@@ -119,6 +119,18 @@ t_tweet send_show (sessionADT se, int tweet_id) {
   str_to_tweets(res, &tw);
 
   return tw;
+}
+
+int send_delete(sessionADT se, int tweet_id) {
+  char req_bytes[SHORTBUF], res[SHORTBUF];
+
+  sprintf(req_bytes, "%s%s%d%s", OPCODE_DELETE, SEPARATOR, tweet_id, SEPARATOR);
+
+  if (send_op(se, req_bytes, res) == 0) {
+    return -1;
+  }
+
+  return atoi(res);
 }
 
 
