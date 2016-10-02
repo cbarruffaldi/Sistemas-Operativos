@@ -86,7 +86,7 @@ t_tweet * send_refresh(sessionADT se, int *size) {
 
     count = str_to_tweets(res, tws + *size);
     *size += count;
-    from_id = tws[count-1].id+1;
+    from_id = tws[*size-1].id+1;
   } while (count == MAX_TW_REFRESH);
 
   return tws;
