@@ -96,14 +96,13 @@ static int login(const char *args, sessionADT se, t_user *uinfo) {
   if (len < USER_SIZE && len > 0 && valid_username(args)) {
     strcpy(uinfo->username, args);
     uinfo->twit_id = 0;
-		send_login(se, args);
-    return VALID;
+		return send_login(se, args);
   }
   else if (len == 0) {
     printf("You must provide a username.\n");
   }
   else if (len >= USER_SIZE) {
-    printf("Username too long.\n");
+    printf("Username too long. Max username length: %d\n", USER_SIZE);
   }
   else {
     printf("Invalid username.\n");
@@ -117,6 +116,7 @@ static int valid_username(const char *username) {
 }
 
 static int tweet(const char *args, sessionADT se, t_user *uinfo) {
+  int id;
   int len = strlen(args);
 	char tw_msg[MSG_SIZE];
 
@@ -127,7 +127,12 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo) {
 		strcpy(tw_msg, args);
 		sanitize_msg(tw_msg);
 
-	  send_tweet(se, tw_msg);
+    id = send_tweet(se, tw_msg);
+
+    if (id == ABORT)
+      return ABORT;
+
+	  printf("Your tweet has id %d\n", id);
 
 		refresh(args, se, uinfo);
     return VALID;
@@ -136,7 +141,7 @@ static int tweet(const char *args, sessionADT se, t_user *uinfo) {
     printf("Can't tweet an empty tweet!\n");
   }
   else {
-    printf("Tweet too long. Tweets can't exceed %d characters\n",MSG_SIZE);
+    printf("Tweet too long. Tweets can't exceed %d characters\n", MSG_SIZE);
   }
 
   return INVALID_ARGS;
@@ -175,6 +180,8 @@ static int like(const char *args, sessionADT se, t_user *uinfo) {
 		printf("No tweet with id %d\n", id);
 		return INVALID_ARGS;
 	}
+  else if (likes == ABORT)
+    return ABORT;
 
   printf("That tweet ended up with %d like%c\n", likes, likes > 1 ? 's' : ' ');
 
@@ -191,7 +198,7 @@ static int refresh(const char *args, sessionADT se, t_user *uinfo) {
 	if (tws != NULL)
 		print_tweets(tws, count);
 	else
-		printf("Received NULL tweet array\n");   //TODO:Sacarlo
+		return ABORT;
 
 	free(tws);
 	return VALID;
@@ -201,8 +208,7 @@ static int logout(const char *args, sessionADT se, t_user *uinfo) {
   if (!logged(uinfo))
     return NOT_LOGGED;
   uinfo->username[0] = '\0';
-	send_logout(se);
-  return VALID;
+	return send_logout(se);
 }
 
 static int show(const char *args, sessionADT se, t_user *uinfo) {
@@ -212,7 +218,9 @@ static int show(const char *args, sessionADT se, t_user *uinfo) {
     return INVALID_ARGS;
 
   t_tweet tw = send_show(se, atoi(args));
-  if (tw.msg[0] == '\0') {
+  if (tw.msg[0] == '\0' && tw.user[0] == '\0')
+    return ABORT;
+  else if (tw.msg[0] == '\0') {
     printf("Invalid id\n");
     return INVALID_ARGS;
   }
@@ -238,7 +246,7 @@ static int delete(const char *args, sessionADT se, t_user *uinfo) {
 		printf("Deleted tweet with id %d\n", id);
 	}
 
-  return VALID;
+  return ans == ABORT ? ABORT : VALID;
 }
 
 static int logged(t_user *uinfo) {

@@ -30,11 +30,11 @@ typedef struct {
   char values[BUFSIZE]; // las columnas se separan por VALUE_SEPARATOR y las filas por ROW_SEPARATOR
 } query_rows;
 
-int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3* db);
-int callback (void *params, int argc, char *argv[], char *azColName[]);
-void * attend(void * p);
-int setup_db(sqlite3* db);
-void concat_value(query_rows * q, char *value);
+static int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3* db);
+static int callback (void *params, int argc, char *argv[], char *azColName[]);
+static void * run_thread(void * p);
+static int setup_db(sqlite3* db);
+static void concat_value(query_rows * q, char *value);
 
 int main(int argc, char *argv[]) {
   sqlite3 *db;
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
   }
 }
 
-int setup_db(sqlite3 *db) {
+static int setup_db(sqlite3 *db) {
   char sql[BUFSIZE];
   sprintf(sql, TABLE_CREATE, USER_SIZE, MSG_SIZE);
   char *errmsg = NULL;
@@ -103,18 +103,16 @@ int setup_db(sqlite3 *db) {
   return 0;
 }
 
-//TODO: Repite código con el create_thread de server.c
-
-int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3 *db) {
+static int create_thread(t_connectionADT con, pthread_mutex_t *mutex, sqlite3 *db) {
   pthread_t thread;
   pthread_data * thdata = malloc(sizeof(*thdata));
   thdata->con = con;
   thdata->mutex = mutex;
   thdata->db = db;
-  return pthread_create(&thread, NULL, attend, thdata);
+  return pthread_create(&thread, NULL, run_thread, thdata);
 }
 
-void * attend(void * p) {
+static void * run_thread(void * p) {
   char sql[BUFSIZE];
   char *errmsg;
   t_requestADT req;
@@ -176,7 +174,7 @@ void * attend(void * p) {
   pthread_exit(NULL);
 }
 
-int callback (void *p, int argc, char *argv[], char *NotUsed[]) {
+static int callback (void *p, int argc, char *argv[], char *NotUsed[]) {
   int i;
   query_rows *param = (query_rows *) p;
 
@@ -190,7 +188,7 @@ int callback (void *p, int argc, char *argv[], char *NotUsed[]) {
   return 0;
 }
 
-void concat_value(query_rows * q, char *value) {
+static void concat_value(query_rows * q, char *value) {
   int i, j;
   for (i = 0, j = q->n; value[i] != '\0'; i++, j++)
     q->values[j] = value[i];

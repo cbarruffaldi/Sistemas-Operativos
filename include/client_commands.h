@@ -2,6 +2,7 @@
 #define _CLIENT_COMMANDS_H_
 
 #include "client.h"
+#include "client_marshalling.h"
 
 /** Ejecuta el comando correspondiente al nombre name con los args como parámetros
 ** de dicho comando. En caso de ser necesario, envía una request usando la sesión

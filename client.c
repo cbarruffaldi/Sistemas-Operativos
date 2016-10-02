@@ -13,9 +13,10 @@
 #define SPACE 1
 #define MAX_LEN 256 // Máximo tamaño de entrada permitido
 
-#define UNSUPPORTED_COMMAND "Unsupported Command"
+#define UNSUPPORTED_COMMAND "Unsupported Command."
 #define NOT_LOGGED_MSG "Must be logged in order to execute command.\nUse login [username]"
-#define ALREADY_LOGGED_MSG "Can't login if already logged"
+#define ALREADY_LOGGED_MSG "Can't login if already logged."
+#define ABORT_MSG "An error has occurred with the server. Aborting."
 
 /*
 ** Estructura análoga al shell del tp de Arqui:
@@ -25,7 +26,7 @@
 static void handle_validity(int valid);
 static int readline_no_spaces(char *str, unsigned int maxlen);
 static int extract_cmd_name(char * cmd_name, const char * str);
-void print_welcome();
+static void print_welcome();
 
 int main(int argc, char *argv[]) {
   char buffer[MAX_LEN];
@@ -33,6 +34,7 @@ int main(int argc, char *argv[]) {
   int name_len;
   int arguments_flag; // 1 si se enviaron argumentos
   int valid;
+  int run = 1;
   sessionADT se;
   t_user user = {"", 0};
 
@@ -47,8 +49,10 @@ int main(int argc, char *argv[]) {
     printf("Failed to connect\n");
     return 1;
   }
+
   print_welcome();
-  while (1) {
+
+  while (run) {
     printf("> ");
     readline_no_spaces(buffer, MAX_LEN);
 
@@ -63,10 +67,13 @@ int main(int argc, char *argv[]) {
       arguments_flag = buffer[name_len] != '\0';
       valid = run_command(cmd_name, buffer+name_len+arguments_flag, se, &user);
       handle_validity(valid);
-    }
 
+      if (valid == ABORT)
+        run = 0;
+    }
   }
 
+  end_session(se);
   return 1;
 }
 
@@ -124,10 +131,13 @@ static void handle_validity(int valid) {
     case ALREADY_LOGGED:
       printf("%s\n", ALREADY_LOGGED_MSG);
       break;
+    case ABORT:
+      printf("%s\n", ABORT_MSG);
+      break;
   }
 }
 
-void print_welcome(){
+static void print_welcome(){
   printf("\t\t\t  _____          _ _   _            \n");
   printf("\t\t\t |_   _|_      _(_) |_| |_ ___ _ __ \n");
   printf("\t\t\t   | | \\ \\ /\\ / / | __| __/ _ \\ '__|\n");

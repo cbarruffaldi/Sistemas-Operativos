@@ -19,7 +19,6 @@
 #include <mqueue.h>
 
 #define ARG_COUNT 3
-#define DATABASE_PROCESS "database.bin"
 #define LOGGER_PROCESS "log.bin"
 #define PATH_SIZE 64
 
@@ -56,10 +55,6 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  if (fork() == 0) { // forkea para iniciar la base de datos
-      execl(DATABASE_PROCESS, DATABASE_PROCESS, argv[2], NULL);
-  }
-
   if (fork() == 0) { // forkea para iniciar el daemon de logging
       execl(LOGGER_PROCESS, LOGGER_PROCESS, QUEUE_NAME, NULL);
   }
@@ -74,9 +69,6 @@ int main(int argc, char *argv[])
     send_mq(CANNOT_INIT_SESSION,ERROR);
     return 1;
   }
-
-  send_mq(DATASE_CORRECT_NOTIFICATION,INFO);
-
 
   while (1) {
     send_mq(SERVER_READY,INFO);
@@ -117,13 +109,18 @@ static void * run_thread(void * p) {
 
   pthread_detach(pthread_self()); // Se liberan los recursos del thread al cerrarse
 
+  free(p); // Ya se extrajeron los datos --> se libera
+
   if (db_se == NULL) {
     send_mq(CANNOT_CONNECT_DB, ERROR);
+    unaccept_client(session);
+    pthread_exit(NULL);
   }
 
-  t_session_data se_data;
+  send_mq(ACHIEVED_CONNECT_DATABSE, INFO);
 
-  free(p); // Ya se extrajeron los datos --> se libera
+
+  t_session_data se_data;
 
 
   se_data.db_se = db_se;
@@ -156,6 +153,10 @@ int sv_login(void * p, const char * username) {
     send_mq(mq_msg,INFO);
 
     return 1;
+  }
+  else {
+    sprintf(mq_msg, CANNOT_LOGIN_NOTIFICATION, user);
+    send_mq(mq_msg, WARNING);
   }
 
   return 0;

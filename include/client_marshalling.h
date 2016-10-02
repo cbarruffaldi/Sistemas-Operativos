@@ -1,8 +1,7 @@
 #ifndef _CLIENT_MARSHALLING_
 #define _CLIENT_MARSHALLING_
 
-#define REFRESHING 1
-#define ENDED 0
+#define ABORT -127  /* Hubo problema al enviar algo al servidor */
 
 #include "marshalling.h"
 
