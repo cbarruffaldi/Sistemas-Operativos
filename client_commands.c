@@ -45,7 +45,7 @@ static char * fill(char c, int length);
 static void print_border();
 static void print_user(char usr[]);
 static void print_msg(char msg[]);
-static print_info(int id, int likes) {
+static void print_info(int id, int likes);
 static void print_tweet(t_tweet tw);
 static void print_tweets(t_tweet * tws, int count);
 static void close_line(int filled);
@@ -266,8 +266,8 @@ static void print_tweets(t_tweet * tws, int count) {
 static void print_tweet(t_tweet tw) {
   print_user(tw.user);
   print_msg(tw.msg);
+	print_info(tw.id, tw.likes);
   print_border();
-  free(spaces);
 }
 
 static void print_border() {
@@ -304,9 +304,9 @@ static void print_msg(char msg[]) {
   close_line(filled);
 }
 
-static print_info(int id, int likes) {
-	char * spaces = fill(' ', MSG_COLUMNS - 26);
-	printf("| id#%-6d | likes:%-5d |%s|\n", tw.id, tw.likes, spaces);
+static void print_info(int id, int likes) {
+	char * spaces = fill(' ', MSG_COLUMNS - 30);
+	printf("| id #%-6d | likes: %-5d |%s|\n", id, likes, spaces);
 	free(spaces);
 }
 
@@ -316,8 +316,8 @@ static void start_of_line() {
 
 static void close_line(int filled) {
   int c = MSG_COLUMNS - filled - 3;
+	c = (c >= 0) ? c : 0;
   char * spaces = fill(' ', c);
-  c = (c >= 0) ? c : 0;
 	printf("%s|\n", spaces);
   free(spaces);
 }
