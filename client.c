@@ -127,6 +127,9 @@ static void handle_validity(int valid) {
   }
 }
 
+/*
+** Imprime el mensaje de bienvenida para el cliente
+*/
 void print_welcome(){
   printf("\t\t\t  _____          _ _   _            \n");
   printf("\t\t\t |_   _|_      _(_) |_| |_ ___ _ __ \n");
