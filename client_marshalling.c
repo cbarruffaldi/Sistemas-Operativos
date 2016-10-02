@@ -22,16 +22,20 @@ static int send_op(sessionADT se, char * op_bytes, char res_bytes[BUFSIZE]);
 sessionADT start_session(char * path) {
   sessionADT se = malloc(sizeof(struct session));
   t_addressADT sv_addr = create_address(path);
+  t_connectionADT con = connect_peer(sv_addr);
   se->req = create_request();
-  se->con = connect_peer(sv_addr);
 
   free_address(sv_addr);
 
-  if (se->con == NULL) {
+  if (con == NULL) {
     free(se);
     free_request(se->req);
+    se = NULL;
   }
-  return se->con == NULL ? NULL : se;
+  else
+    se->con = con;
+
+  return se;
 }
 
 void end_session(sessionADT se) {
