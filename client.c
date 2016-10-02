@@ -8,7 +8,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#define EXIT "exit"  // Si se envia EXIT se cierra el cliente
 #define ARG_COUNT 2
 #define SPACE 1
 #define MAX_LEN 256 // Máximo tamaño de entrada permitido
@@ -17,6 +16,7 @@
 #define NOT_LOGGED_MSG "Must be logged in order to execute command.\nUse login [username]"
 #define ALREADY_LOGGED_MSG "Can't login if already logged."
 #define ABORT_MSG "An error has occurred with the server. Aborting."
+#define EXIT_MSG "Closing Tweeter application..."
 
 /*
 ** Estructura análoga al shell del tp de Arqui:
@@ -56,25 +56,19 @@ int main(int argc, char *argv[]) {
     printf("> ");
     readline_no_spaces(buffer, MAX_LEN);
 
-    if (strcmp(buffer, EXIT) == 0) { // se recibió EXIT --> nos vamos
-      printf("Exiting...\n");
-      end_session(se);
-      return 0;
-    }
-
     if (buffer[0] != '\0') { // Se escribió algo
       name_len = extract_cmd_name(cmd_name, buffer);
       arguments_flag = buffer[name_len] != '\0';
       valid = run_command(cmd_name, buffer+name_len+arguments_flag, se, &user);
       handle_validity(valid);
 
-      if (valid == ABORT)
+      if (valid == ABORT || valid == EXIT)
         run = 0;
     }
   }
 
   end_session(se);
-  return 1;
+  return valid == ABORT;
 }
 
 /*
@@ -133,6 +127,9 @@ static void handle_validity(int valid) {
       break;
     case ABORT:
       printf("%s\n", ABORT_MSG);
+      break;
+    case EXIT:
+      printf("%s\n", EXIT_MSG);
       break;
   }
 }

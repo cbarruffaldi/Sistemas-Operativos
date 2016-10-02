@@ -9,6 +9,7 @@
 ** y la información de usuario dada */
 int run_command(const char *name, const char *args, sessionADT se, t_user *user);
 
+#define EXIT 2
 #define VALID 1
 #define UNSUPPORTED 0
 #define INVALID_ARGS -1

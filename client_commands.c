@@ -36,6 +36,7 @@ static int refresh(const char *args, sessionADT se, t_user *uinfo);
 static int logout(const char *args, sessionADT se, t_user *uinfo);
 static int show(const char *args, sessionADT se, t_user *uinfo);
 static int delete(const char *args, sessionADT se, t_user *uinfo);
+static int tw_exit(const char *args, sessionADT se, t_user *uinfo);
 
 static void sanitize_msg(char msg[]);
 static int valid_id(const char *args);
@@ -53,7 +54,7 @@ static void start_of_line();
 
 static void show_cmd_help(command cmd);
 
-static command commands[]= {{"help", help, "", "Displays commands and descriptions"},
+static command commands[]= {{"help", help, "", "Displays commands and descriptions."},
               {"login", login, "[username]", "Logs user with username."},
               {"tweet", tweet, "[msg]", "Tweets a tweet."},
 			  			{"tw", tweet, "[msg]", "Tweets a tweet."},
@@ -61,7 +62,8 @@ static command commands[]= {{"help", help, "", "Displays commands and descriptio
               {"refresh", refresh, "", "Prints most recent tweets."},
               {"logout", logout, "", "Logs out."},
               {"show", show, "[tweet_id]", "Prints tweet with tweet_id."},
-			  			{"delete", delete, "[tweet_id]", "Deletes tweet with tweet_id if it was sent by the same user trying to delete"}
+			  			{"delete", delete, "[tweet_id]", "Deletes tweet with tweet_id if it was sent by the same user trying to delete."},
+              {"exit", tw_exit, "", "Closes the application."}
 			  			};
 
 static int logged(t_user *uinfo);
@@ -247,6 +249,10 @@ static int delete(const char *args, sessionADT se, t_user *uinfo) {
 	}
 
   return ans == ABORT ? ABORT : VALID;
+}
+
+static int tw_exit(const char *args, sessionADT se, t_user *uinfo) {
+  return EXIT;
 }
 
 static int logged(t_user *uinfo) {
