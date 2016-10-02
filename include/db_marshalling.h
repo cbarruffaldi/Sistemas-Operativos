@@ -3,6 +3,9 @@
 
 #include "marshalling.h"
 
+#define VALID 1
+#define NOT_VALID -1
+
 typedef struct t_DBsession * t_DBsessionADT;
 
 t_DBsessionADT start_DBsession(const char *db_path);
