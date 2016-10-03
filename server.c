@@ -225,8 +225,6 @@ int sv_like(void * p, int id) {
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
   int valid;
 
-  printf("RECEIVED SV_LIKE WITH \nid:%d\n", id);
-
   if (!logged(p))
     return -1;
 
@@ -249,8 +247,6 @@ int sv_delete(void * p, int id) {
   char *username = ((t_session_data *) p)->user; // solo puede borrar los tweets de su mismo usuario
   t_DBsessionADT db_se = ((t_session_data *) p)->db_se;
   int valid;
-
-  printf("RECEIVED SV_DELETE WITH \nid:%d\n", id);
 
   if (!logged(p))
     return -1;
