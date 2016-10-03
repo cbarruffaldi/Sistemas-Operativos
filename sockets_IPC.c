@@ -18,7 +18,12 @@
 #define MAX_CONNECTIONS 1024
 #define DELIMITATOR ':'
 
-t_addressADT create_address_port(const char * hostname, int port);
+static t_addressADT create_address_port(const char * hostname, int port);
+
+struct t_request {
+  char msg[BUFSIZE];
+  int res_fd;
+};
 
 struct t_address {
   int listen_fd; // solo se usa si pasó por un listen
@@ -29,68 +34,17 @@ struct t_connection {
   int fd;
 };
 
-struct t_request {
-  char msg[BUFSIZE];
-  int res_fd;
-};
-
 struct t_response {
   char msg[BUFSIZE];
 };
-
-t_responseADT create_response() {
-  return malloc(sizeof(struct t_response));
-}
-
-void free_response(t_responseADT res) {
-  if (res != NULL)
-    free(res);
-}
-
-void set_response_msg(t_responseADT res, const char *msg) {
-  strcpy(res->msg, msg);
-}
-
-void get_response_msg(t_responseADT res, char *buffer) {
-  strcpy(buffer, res->msg);
-  free(res);
-}
 
 t_requestADT create_request() {
   t_requestADT req = malloc(sizeof(struct t_request));
   return req;
 }
 
-void set_request_msg(t_requestADT req, const char *msg) {
-  strcpy(req->msg, msg);
-}
-
-t_responseADT send_request(t_connectionADT con, t_requestADT req) {
-  int n = 0;
-  t_responseADT res = malloc(sizeof(struct t_response));
-
-  // Pide respuesta si se pudo enviar el request
-  if (send(con->fd, req, (sizeof(struct t_request)), 0) > 0)
-    n = recv(con->fd, res, (sizeof(struct t_response)), 0);
-
-  if (n < 1) {
-    free(res);
-    return NULL;
-  }
-
-  return res;
-}
-
-void free_request(t_requestADT req) {
-  if (req != NULL)
-    free(req);
-}
-
-void unaccept(t_connectionADT con) {
-  if (con != NULL) {
-    close(con->fd);
-    free(con);
-  }
+t_responseADT create_response() {
+  return malloc(sizeof(struct t_response));
 }
 
 t_addressADT create_address(const char * host) {
@@ -104,7 +58,7 @@ t_addressADT create_address(const char * host) {
   return create_address_port(hostname, atoi(occurrence+1));
 }
 
-t_addressADT create_address_port(const char * hostname, int port) {
+static t_addressADT create_address_port(const char * hostname, int port) {
   struct hostent *he;
   struct sockaddr_in sockaddr;
   t_addressADT addr;
@@ -124,9 +78,29 @@ t_addressADT create_address_port(const char * hostname, int port) {
   return addr;
 }
 
-void free_address(t_addressADT addr) {
-  if (addr != NULL)
-    free(addr);
+t_connectionADT connect_peer(t_addressADT addr) {
+  t_connectionADT con = malloc(sizeof(struct t_connection));
+  con->fd = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (connect(con->fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0) {
+    free(con);
+    close(con->fd);
+    return NULL;
+  }
+
+  return con;
+}
+
+int listen_peer(t_addressADT addr) {
+  addr->listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (bind(addr->listen_fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0 ||
+                listen(addr->listen_fd, MAX_CONNECTIONS) < 0) {
+    close(addr->listen_fd);
+    return -1;
+  }
+
+  return 0;
 }
 
 t_connectionADT accept_peer(t_addressADT addr) {
@@ -144,41 +118,37 @@ t_connectionADT accept_peer(t_addressADT addr) {
   return con;
 }
 
-t_connectionADT connect_peer(t_addressADT addr) {
-  t_connectionADT con = malloc(sizeof(struct t_connection));
-  con->fd = socket(AF_INET, SOCK_STREAM, 0);
+void set_response_msg(t_responseADT res, const char *msg) {
+  strcpy(res->msg, msg);
+}
 
-  if (connect(con->fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0) {
-    free(con);
-    close(con->fd);
+void set_request_msg(t_requestADT req, const char *msg) {
+  strcpy(req->msg, msg);
+}
+
+void get_response_msg(t_responseADT res, char *buffer) {
+  strcpy(buffer, res->msg);
+  free(res);
+}
+
+void get_request_msg(t_requestADT req, char *buffer) {
+  strcpy(buffer, req->msg);
+}
+
+t_responseADT send_request(t_connectionADT con, t_requestADT req) {
+  int n = 0;
+  t_responseADT res = malloc(sizeof(struct t_response));
+
+  // Pide respuesta si se pudo enviar el request
+  if (send(con->fd, req, (sizeof(struct t_request)), 0) > 0)
+    n = recv(con->fd, res, (sizeof(struct t_response)), 0);
+
+  if (n < 1) {
+    free(res);
     return NULL;
   }
 
-  return con;
-}
-
-void disconnect(t_connectionADT con) {
-  if (con != NULL) {
-    close(con->fd);
-    free(con);
-  }
-}
-
-int listen_peer(t_addressADT addr) {
-  addr->listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-  if (bind(addr->listen_fd, (struct sockaddr *) &(addr->sockaddr), sizeof(addr->sockaddr)) < 0 ||
-                listen(addr->listen_fd, MAX_CONNECTIONS) < 0) {
-    close(addr->listen_fd);
-    return -1;
-  }
-
-  return 0;
-}
-
-void unlisten_peer(t_addressADT addr) {
-  if (addr != NULL)
-    close(addr->listen_fd);
+  return res;
 }
 
 t_requestADT read_request(t_connectionADT con) {
@@ -193,14 +163,44 @@ t_requestADT read_request(t_connectionADT con) {
   return req;
 }
 
-void get_request_msg(t_requestADT req, char *buffer) {
-  strcpy(buffer, req->msg);
-}
-
 int send_response(t_requestADT req, t_responseADT res) {
   if (send(req->res_fd, res, sizeof(struct t_response), 0) < 1)
     return -1;
 
   free(req);
   return 0;
+}
+
+void disconnect(t_connectionADT con) {
+  if (con != NULL) {
+    close(con->fd);
+    free(con);
+  }
+}
+
+void unaccept(t_connectionADT con) {
+  if (con != NULL) {
+    close(con->fd);
+    free(con);
+  }
+}
+
+void unlisten_peer(t_addressADT addr) {
+  if (addr != NULL)
+    close(addr->listen_fd);
+}
+
+void free_response(t_responseADT res) {
+  if (res != NULL)
+    free(res);
+}
+
+void free_request(t_requestADT req) {
+  if (req != NULL)
+    free(req);
+}
+
+void free_address(t_addressADT addr) {
+  if (addr != NULL)
+    free(addr);
 }

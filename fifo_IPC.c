@@ -26,53 +26,39 @@ struct t_address {
   char path[BUFSIZE];
 };
 
-struct t_connection {
-  char path[BUFSIZE];
-};
-
 struct t_request {
   char msg[BUFSIZE];
   struct t_address res_addr;
+};
+
+struct t_connection {
+  char path[BUFSIZE];
 };
 
 struct t_response{
   char msg[BUFSIZE];
 };
 
+t_requestADT create_request() {
+  struct t_address res_addr;
+  t_requestADT req = malloc(sizeof(struct t_request));
+  sprintf(res_addr.path, FIFO_RESPONSE_PATH, getpid(), (unsigned long)pthread_self());
+  req->res_addr = res_addr;
+
+  if(mkfifo(res_addr.path, FLAGS) < 0)  // Crea fifo
+    return NULL;
+
+  return req;
+}
+
+t_responseADT create_response() {
+  return malloc(sizeof(struct t_response));
+}
+
 t_addressADT create_address(const char * path) {
   t_addressADT addr = malloc(sizeof(struct t_address));
   strcpy(addr->path, path);
   return addr;
-}
-
-void free_address(t_addressADT addr) {
-  if (addr != NULL)
-    free(addr);
-}
-
-// Recibe en buffer nombre de fifo a crear
-t_connectionADT accept_peer(t_addressADT addr) {
-  char buffer[BUFSIZE];
-  int fd, n = 0;
-  t_connectionADT con;
-
-  fd = open(addr->path, O_RDWR); // solo leerá pero así siempre hay un write
-                                 // read no devolverá cero si se hace close del write.
-
-  if (fd < 0)
-    return NULL;
-
-  n = read(fd, buffer, BUFSIZE);
-  close(fd);
-
-  if (n < 1)
-    return NULL;
-
-  mkfifo(buffer, FLAGS);
-  con = malloc(sizeof(struct t_connection));
-  strcpy(con->path, buffer);
-
-  return con;
 }
 
 t_connectionADT connect_peer(t_addressADT addr) {
@@ -96,75 +82,51 @@ t_connectionADT connect_peer(t_addressADT addr) {
   return con;
 }
 
-void unaccept(t_connectionADT con) {
-  if (con != NULL)
-    free(con);
-}
-
-void disconnect(t_connectionADT con) {
-  if (con != NULL) {
-    send_disconnect_signal(con);
-    unlink(con->path);
-    free(con);
-  }
-}
-
-static void send_disconnect_signal(t_connectionADT con) {
-  int fd = open(con->path, O_WRONLY);
-  close(fd);
-}
-
 int listen_peer(t_addressADT addr) {
   if (mkfifo(addr->path, FLAGS) < 0)
     return -1;
   return 0;
 }
 
-// Cierra el file descriptor de la conexión y borra el fifo asociado.
-void unlisten_peer(t_addressADT addr) {
-  if (addr != NULL)
-    unlink(addr->path);
-}
+t_connectionADT accept_peer(t_addressADT addr) {
+  char buffer[BUFSIZE]; // Recibe en buffer nombre de fifo a crear
+  int fd, n = 0;
+  t_connectionADT con;
 
-void free_response(t_responseADT res) {
-  if (res != NULL)
-    free(res);
-}
+  fd = open(addr->path, O_RDWR); // solo leerá pero así siempre hay un write
+                                 // read no devolverá cero si se hace close del write.
 
-t_responseADT create_response() {
-  return malloc(sizeof(struct t_response));
-}
-
-t_requestADT create_request() {
-  struct t_address res_addr;
-  t_requestADT req = malloc(sizeof(struct t_request));
-  sprintf(res_addr.path, FIFO_RESPONSE_PATH, getpid(), (unsigned long)pthread_self());
-  req->res_addr = res_addr;
-
-  if(mkfifo(res_addr.path, FLAGS) < 0)  // Crea fifo
+  if (fd < 0)
     return NULL;
 
-  return req;
-}
+  n = read(fd, buffer, BUFSIZE);
+  close(fd);
 
-void free_request(t_requestADT req) {
-  if (req != NULL) {
-    unlink(req->res_addr.path);
-    free(req);
-  }
-}
+  if (n < 1)
+    return NULL;
 
-void set_request_msg(t_requestADT req, const char *msg) {
-  strcpy(req->msg, msg);
+  mkfifo(buffer, FLAGS);
+  con = malloc(sizeof(struct t_connection));
+  strcpy(con->path, buffer);
+
+  return con;
 }
 
 void set_response_msg(t_responseADT res, const char *msg) {
   strcpy(res->msg, msg);
 }
 
+void set_request_msg(t_requestADT req, const char *msg) {
+  strcpy(req->msg, msg);
+}
+
 void get_response_msg(t_responseADT res, char *buffer) {
   strcpy(buffer, res->msg);
   free(res);
+}
+
+void get_request_msg(t_requestADT req, char *buffer) {
+  strcpy(buffer, req->msg);
 }
 
 t_responseADT send_request(t_connectionADT con, t_requestADT req) {
@@ -190,6 +152,55 @@ static t_responseADT read_response(char * fifo) {
 
 t_requestADT read_request(t_connectionADT con) {
   return read_from_fifo(con->path, sizeof(struct t_request));
+}
+
+int send_response(t_requestADT req, t_responseADT res) {
+  int rc = write_to_fifo(req->res_addr.path, res, sizeof(struct t_response));
+  if (rc == 0)
+    free(req);
+
+  return rc;
+}
+
+void disconnect(t_connectionADT con) {
+  if (con != NULL) {
+    send_disconnect_signal(con);
+    unlink(con->path);
+    free(con);
+  }
+}
+
+static void send_disconnect_signal(t_connectionADT con) {
+  int fd = open(con->path, O_WRONLY);
+  close(fd);
+}
+
+void unaccept(t_connectionADT con) {
+  if (con != NULL)
+    free(con);
+}
+
+// Cierra el file descriptor de la conexión y borra el fifo asociado.
+void unlisten_peer(t_addressADT addr) {
+  if (addr != NULL)
+    unlink(addr->path);
+}
+
+void free_response(t_responseADT res) {
+  if (res != NULL)
+    free(res);
+}
+
+void free_request(t_requestADT req) {
+  if (req != NULL) {
+    unlink(req->res_addr.path);
+    free(req);
+  }
+}
+
+void free_address(t_addressADT addr) {
+  if (addr != NULL)
+    free(addr);
 }
 
 // Lee algo de tamaño size de fifo
@@ -227,16 +238,4 @@ static int write_to_fifo(char * fifo, void * content, int size) {
     return -1;
 
   return 0;
-}
-
-void get_request_msg(t_requestADT req, char *buffer) {
-  strcpy(buffer, req->msg);
-}
-
-int send_response(t_requestADT req, t_responseADT res) {
-  int rc = write_to_fifo(req->res_addr.path, res, sizeof(struct t_response));
-  if (rc == 0)
-    free(req);
-
-  return rc;
 }
