@@ -13,9 +13,4 @@ SOCKETS
 4- Ejecutar "./server.bin (hostname):(sv_port) (hostname):(db_port)"
 5- Ejecutar n clients en otras terminales pasando como argumento el socket del servidor ("./client.bin (hostname):(sv_port)").
 
-PARA CORRER EN PAMPERO LOS SOCKETS
-
-1- Conectarse desde ssh a pampero (ssh nombre_de_usuario@pampero.itba.edu.ar) o estar en una de las compus del lab.
-2- Ejecutar "./database.bin pampero:(db_port)"
-3- Ejecutar "./server.bin pampero:(sv_port) pampero:(db_port)" dentro de pampero.
-4- Ejecutar "./client.bin pampero.itba.edu.ar:(sv_port)" desde una compu no conectada a pampero.
+NOTA: si se prefiere usar launcher.sh solo basta con haber compilado con la implementación de IPC deseada (make [sockets | fifo]) y ejecutar ./launcher.sh arg1 arg2 donde arg1 y arg2 dependen de la implementación de IPC.
