@@ -33,7 +33,7 @@ int send_login (sessionADT se, const char *username);
 int send_logout (sessionADT se);
 
 /* Guarda en un puntero a t_tweet un tweet dado su id.
-** Si el id no existe -1. */
+** Si el id no existe devuelve -1. */
 int send_show(sessionADT se, int tweet_id, t_tweet *tw);
 
 /* Borra de la base de datos el tweet con el id dado.

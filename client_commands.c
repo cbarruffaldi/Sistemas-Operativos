@@ -59,14 +59,10 @@ static command commands[]= {{"help", help, "", "Displays commands and descriptio
               {"tweet", tweet, "[msg]", "Tweets a tweet."},
 			  			{"tw", tweet, "[msg]", "Tweets a tweet."},
               {"like", like, "[tweet_id]", "Likes a tweet."},
-							{"l", like, "[tweet_id]", "Likes a tweet."},
               {"refresh", refresh, "", "Prints most recent tweets."},
-							{"r", refresh, "", "Prints most recent tweets."},
               {"logout", logout, "", "Logs out."},
               {"show", show, "[tweet_id]", "Prints tweet with tweet_id."},
-							{"s", show, "[tweet_id]", "Prints tweet with tweet_id."},
 			  			{"delete", delete, "[tweet_id]", "Deletes tweet with tweet_id if it was sent by the same user trying to delete."},
-							{"d", delete, "[tweet_id]", "Deletes tweet with tweet_id if it was sent by the same user trying to delete."},
 							{"exit", tw_exit, "", "Closes the application."}
 			  			};
 
@@ -241,8 +237,10 @@ static int delete(const char *args, sessionADT se, t_user *uinfo) {
 	int ans, id;
   if (!logged(uinfo))
     return NOT_LOGGED;
-  if (!valid_id(args))
+  if (!valid_id(args)) {
+    printf("Invalid tweet id.\n");
     return INVALID_ARGS;
+  }
 
 	id = atoi(args);
   ans = send_delete(se, id);

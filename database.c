@@ -35,6 +35,7 @@ static int callback (void *params, int argc, char *argv[], char *azColName[]);
 static void * run_thread(void * p);
 static int setup_db(sqlite3* db);
 static void concat_value(query_rows * q, char *value);
+static void close_thread(t_connectionADT con, t_responseADT res);
 
 int main(int argc, char *argv[]) {
   sqlite3 *db;
@@ -81,6 +82,7 @@ int main(int argc, char *argv[]) {
 
     if (con == NULL) {
       printf("[BD]: Accept failed.\n");
+      sqlite3_close(db);
       return 1;
     }
 
@@ -90,6 +92,7 @@ int main(int argc, char *argv[]) {
 
     if (rc) {
       printf("[BD]: Failed to create thread\n");
+      sqlite3_close(db);
       return 1;
     }
   }
@@ -124,6 +127,7 @@ static void * run_thread(void * p) {
   query_rows param;
 
   t_responseADT res = create_response();
+  pthread_detach(pthread_self()); // Se liberan los recursos del thread al cerrarse
 
   pthread_data *data = (pthread_data *) p;
   sqlite3* db = data->db;
@@ -140,9 +144,7 @@ static void * run_thread(void * p) {
 
     if (req == NULL) {
       printf("[BD]: server disconnected\n");
-      free_response(res);
-      unaccept(con);
-      pthread_exit(NULL);
+      close_thread(con, res);
     }
 
     get_request_msg(req, sql);
@@ -172,11 +174,18 @@ static void * run_thread(void * p) {
 
     if (send_response(req, res) < 0) {
       printf("[BD]: Failed to send response\n");
-      pthread_exit(NULL);
+      close_thread(con, res);
     }
   }
 
-  pthread_exit(NULL);
+  close_thread(con, res);
+  return NULL;
+}
+
+static void close_thread(t_connectionADT con, t_responseADT res) {
+  unaccept(con);
+  free_response(res);
+  pthread_exit(NULL);  
 }
 
 static int callback (void *p, int argc, char *argv[], char *NotUsed[]) {
