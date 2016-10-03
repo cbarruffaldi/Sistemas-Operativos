@@ -16,7 +16,7 @@
 #define NOT_LOGGED_MSG "Must be logged in order to execute command.\nUse login [username]"
 #define ALREADY_LOGGED_MSG "Can't login if already logged."
 #define ABORT_MSG "An error has occurred with the server. Aborting."
-#define EXIT_MSG "Closing Tweeter application..."
+#define EXIT_MSG "Closing Twitter application..."
 
 /*
 ** Estructura análoga al shell del tp de Arqui:

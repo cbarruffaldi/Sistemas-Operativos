@@ -5,13 +5,11 @@
 
 #define QUERY_SIZE 512
 
-#define TW_BLOCK_SIZE 10
-
 /* Las funciones almacenan en buffer la query */
 /* Las funciones generan las consultas SQL necesarias para enviar
    a la base de datos según el comando */
-   
-void query_refresh(char *buffer, int id);
+
+void query_refresh(char *buffer, int id, int max_count);
 
 void query_like(char *buffer, int id);
 

@@ -31,8 +31,8 @@ WHERE "ATR_TWEET_ID" = %d AND "ATR_TWEET_USER" = '%s'; \
 DELETE FROM "TABLE_TWEET" \
 WHERE "ATR_TWEET_ID" = %d AND "ATR_TWEET_USER" = '%s';"
 
-void query_refresh(char *sql, int first_id) {
-	sprintf(sql, Q_REFRESH, first_id, TW_BLOCK_SIZE);
+void query_refresh(char *sql, int first_id, int max_count) {
+	sprintf(sql, Q_REFRESH, first_id, max_count);
 }
 
 void query_like(char *sql, int id) {

@@ -87,7 +87,7 @@ int send_refresh(t_DBsessionADT se, int from_id, t_tweet tws[]) {
   char response[SHORTBUF];
   char query[QUERY_SIZE];
 
-  query_refresh(query, from_id);
+  query_refresh(query, from_id, MAX_TW_REFRESH);
 
   if (!send_query(se, query, response))
     return ABORT;
@@ -104,7 +104,7 @@ int send_show(t_DBsessionADT se, int tweet_id, t_tweet *tw) {
   if (!send_query(se, query, response))
     return ABORT;
 
-  tw->msg[0] = '\0';  
+  tw->msg[0] = '\0';
   str_to_tweets(response, tw);
 
   return VALID;
