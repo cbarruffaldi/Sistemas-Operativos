@@ -277,6 +277,7 @@ t_tweet sv_show(void * p, int id) {
   sprintf(mq_msg,SHOW_NOTIFICATION,id);
   send_mq(mq_msg,INFO);
 
+  tw.msg[0] = '\0';
   valid = send_show(db_se, id, &tw);
 
   if (valid == ABORT) {

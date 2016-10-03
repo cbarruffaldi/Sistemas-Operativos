@@ -103,7 +103,8 @@ int send_show(t_DBsessionADT se, int tweet_id, t_tweet *tw) {
 
   if (!send_query(se, query, response))
     return ABORT;
-  
+
+  tw->msg[0] = '\0';  
   str_to_tweets(response, tw);
 
   return VALID;
