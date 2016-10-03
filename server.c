@@ -137,6 +137,7 @@ static void * run_thread(void * p) {
     send_mq(CANNOT_SEND_RESPONSE, WARNING);
   }
 
+  send_mq(CLOSE_CONNECT_DB, INFO);
   close_thread(&se_data);
   return NULL;
 }
@@ -189,8 +190,10 @@ int sv_tweet(void * p, const char * msg) {
 
   id = send_tweet(db_se, username, msg);
 
-  if (id == ABORT)
+  if (id == ABORT) {
+    send_mq(LOST_CONNECT_DB, ERROR);
     close_thread(p);
+  }
 
   return id;
 }
@@ -209,8 +212,10 @@ int sv_refresh(void * p, int from_id, t_tweet tws[]) {
 
   n = send_refresh(db_se, from_id, tws);
 
-  if (n == ABORT)
+  if (n == ABORT) {
+    send_mq(LOST_CONNECT_DB, ERROR);
     close_thread(p);
+  }
 
   return n;
 }
@@ -231,8 +236,10 @@ int sv_like(void * p, int id) {
     sprintf(mq_msg,LIKE_NOTIFICATION,id);
     send_mq(mq_msg,INFO);
   }
-  else if (valid == ABORT)
+  else if (valid == ABORT){
+    send_mq(LOST_CONNECT_DB, ERROR);
     close_thread(p);
+  }
 
   return valid;
 }
@@ -253,8 +260,10 @@ int sv_delete(void * p, int id) {
     sprintf(mq_msg, DELETE_NOTIFICATION, id, username);
     send_mq(mq_msg, INFO);
   }
-  else if (valid == ABORT)
+  else if (valid == ABORT) {
+    send_mq(LOST_CONNECT_DB, ERROR);
     close_thread(p);
+  }
 
   return valid;
 }
@@ -270,8 +279,10 @@ t_tweet sv_show(void * p, int id) {
 
   valid = send_show(db_se, id, &tw);
 
-  if (valid == ABORT)
+  if (valid == ABORT) {
+    send_mq(LOST_CONNECT_DB, ERROR);
     close_thread(p);
+  }
 
   return tw;
 }
@@ -281,7 +292,6 @@ static int logged(t_session_data * data) {
 }
 
 static void close_thread(t_session_data * data) {
-  send_mq(LOST_CONNECT_DB, ERROR);
   end_DBsession(data->db_se);
   unaccept_client(data->sv_se);
   pthread_exit(NULL);

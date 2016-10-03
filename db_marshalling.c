@@ -16,13 +16,20 @@ struct t_DBsession {
 };
 
 t_DBsessionADT start_DBsession(const char * path) {
+  t_connectionADT con;
   t_DBsessionADT se = malloc(sizeof(struct t_DBsession));
   t_addressADT sv_addr = create_address(path);
-  t_connectionADT con = connect_peer(sv_addr);
-  se->req = create_request();
+
+  if (sv_addr == NULL) {
+    free(se);
+    return NULL;
+  }
+
+  con = connect_peer(sv_addr);
 
   free_address(sv_addr);
 
+  se->req = create_request();
   if (con == NULL) {
     free(se);
     free_request(se->req);

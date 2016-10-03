@@ -20,9 +20,16 @@ struct session {
 static int send_op(sessionADT se, char * op_bytes, char res_bytes[BUFSIZE]);
 
 sessionADT start_session(char * path) {
+  t_connectionADT con;
   sessionADT se = malloc(sizeof(struct session));
   t_addressADT sv_addr = create_address(path);
-  t_connectionADT con = connect_peer(sv_addr);
+
+  if (sv_addr == NULL) {
+    free(se);
+    return NULL;
+  }
+
+  con = connect_peer(sv_addr);
   se->req = create_request();
 
   free_address(sv_addr);
