@@ -51,9 +51,6 @@ t_master_sessionADT setup_master_session(char *sv_path) {
     return NULL;
   }
 
-  printf("Server listening\n"); //TODO:Sacarlo
-
-
   if (listen_peer(addr) < 0) {
     return NULL;
   }

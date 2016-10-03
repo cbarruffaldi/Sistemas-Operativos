@@ -24,7 +24,6 @@
 
 #define QUEUE_NAME  "/SV_TWITTER_QUEUE"
 
-
 typedef struct {
   char db_path[PATH_SIZE];
   t_sessionADT session;
