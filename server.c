@@ -79,10 +79,11 @@ int main(int argc, char *argv[])
       send_mq(CLIENT_ACCEPTED, INFO);
       create_thread(argv[2], session);
     }
-    else 
+    else
       send_mq(CLIENT_NOT_ACCEPTED,ERROR);
   }
 
+  send_mq(CLOSE_MASTER_SESSION, WARNING);
   end_master_session(master_session);
   return 1;
 }

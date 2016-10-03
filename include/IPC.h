@@ -1,7 +1,7 @@
 #ifndef _IPC_H_
 #define _IPC_H_
 
-#define BUFSIZE 4096
+#define BUFSIZE 1024
 
 /* Representa un paquete a enviar. */
 typedef struct t_request * t_requestADT;
@@ -23,7 +23,7 @@ t_requestADT create_request();
 /* Crea nuevo response. */
 t_responseADT create_response();
 
-/* Crea el adress correspondiente al string dado. 
+/* Crea el adress correspondiente al string dado.
 ** El formate del path depende de la implementación. */
 t_addressADT create_address(const char * path);
 
@@ -33,7 +33,7 @@ t_addressADT create_address(const char * path);
 t_connectionADT connect_peer(t_addressADT addr);
 
 /* Abre un nuevo canal por el cual el peer leerá requests que sean enviados
-** al address pasado como parámetro. 
+** al address pasado como parámetro.
 ** Devuelve -1 en caso de error. */
 int listen_peer(t_addressADT addr);
 
@@ -54,16 +54,16 @@ void get_response_msg(t_responseADT res, char buffer[]);
 /* Getter de los bytes en el request. Copia el mensaje en buffer.  */
 void get_request_msg(t_requestADT req, char buffer[]);
 
-/* Envia un request y devuelve su respuesta. 
+/* Envia un request y devuelve su respuesta.
 ** Bloqueante. */
 t_responseADT send_request(t_connectionADT con, t_requestADT req);
 
-/* Lee request de una conexión. 
+/* Lee request de una conexión.
 ** Bloqueante. */
 t_requestADT read_request(t_connectionADT con);
 
-/* Responde al peer que envió el request dado como parámetro. 
-** Libera los recursos asociados al request. 
+/* Responde al peer que envió el request dado como parámetro.
+** Libera los recursos asociados al request.
 ** Bloqueante. */
 int send_response(t_requestADT req, t_responseADT res);
 

@@ -3,7 +3,7 @@
 
 #include "IPC.h"
 
-#define MAX_TW_REFRESH 10
+#define MAX_TW_REFRESH 5
 #define SHORTBUF 256
 
 #define ABORT -127  /* Hubo problema de IPC */

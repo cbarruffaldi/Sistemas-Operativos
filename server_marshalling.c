@@ -109,10 +109,13 @@ int attend(t_sessionADT se) {
       return 0;
     get_request_msg(req, buffer);
     valid = execute(buffer, se->res, se->data);
+
     if (!valid)
       set_response_msg(se->res, INVALID_MSG);
-    if (send_response(req, se->res) < 0)
+
+    if (send_response(req, se->res) < 0) {
       return -1;
+    }
   }
 }
 
